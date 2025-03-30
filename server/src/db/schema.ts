@@ -2,7 +2,7 @@ import * as p from "drizzle-orm/pg-core";
 
 // clubs table
 export const clubs = p.pgTable("clubs", {
-  id: p.uuid("id").primaryKey(),
+  id: p.uuid("id").defaultRandom().primaryKey(),
   name: p.text("name").notNull(),
   description: p.text("description"),
   groupUrl: p.text("group_url"),
@@ -11,9 +11,9 @@ export const clubs = p.pgTable("clubs", {
   twitterUrl: p.text("twitter_url"),
   instagramUrl: p.text("instagram_url"),
   websiteUrl: p.text("website_url"),
+  instagramUsername: p.text("instagram_username"),
   lastModifiedDate: p.timestamp("last_modified_date").notNull(),
   externalId: p.integer("external_id").notNull().unique(),
-  accessToken: p.text("access_token").unique(),
 });
 
 // areas_of_interest table

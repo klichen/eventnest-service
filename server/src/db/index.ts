@@ -1,5 +1,10 @@
+import type { NeonQueryFunction } from "@neondatabase/serverless";
 import "dotenv/config";
-import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle, NeonHttpDatabase } from "drizzle-orm/neon-http";
+
+export type NeonConnection = NeonHttpDatabase<Record<string, unknown>> & {
+  $client: NeonQueryFunction<any, any>;
+};
 
 export class Postgres {
   // Holds the singleton connection instance

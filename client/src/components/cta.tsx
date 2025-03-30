@@ -19,6 +19,7 @@ export default function CTA() {
             <Button asChild size="lg" className="w-full gap-1.5">
               <Link
                 target="_blank"
+                // try changing the permissions? I don't need manage insights, comments, etc.
                 href="https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id=647835774345011&redirect_uri=https://localhost:3000/user&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights"
               >
                 <InstagramIcon className="h-5 w-5" />

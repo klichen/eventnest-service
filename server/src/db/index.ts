@@ -1,26 +1,38 @@
-import type { NeonQueryFunction } from "@neondatabase/serverless";
-import "dotenv/config";
-import { drizzle, NeonHttpDatabase } from "drizzle-orm/neon-http";
+import dotenv from "dotenv";
+dotenv.config();
 
-export type NeonConnection = NeonHttpDatabase<Record<string, unknown>> & {
-  $client: NeonQueryFunction<any, any>;
+import pg from "pg";
+import {
+  drizzle,
+  NodePgDatabase,
+  type NodePgClient,
+} from "drizzle-orm/node-postgres";
+
+export type PgConnection = NodePgDatabase<Record<string, unknown>> & {
+  $client: NodePgClient;
 };
 
+// This class holds an instance of a connection pool and exposes the Drizzle connection.
 export class Postgres {
-  // Holds the singleton connection instance
-  private static _connection: ReturnType<typeof drizzle> | null = null;
+  public connection: ReturnType<typeof drizzle>;
 
-  // Getter for the connection. Initializes it if it hasn't been created.
-  public static get connection() {
-    if (!this._connection) {
-      const url = process.env.DATABASE_URL;
-      if (!url) {
-        throw new Error("POSTGRES_URL environment variable not set");
-      }
-      // Initialize the connection using drizzle.
-      this._connection = drizzle(url);
+  constructor() {
+    const { Pool } = pg;
+    const url = process.env.DATABASE_URL;
+    if (!url) {
+      throw new Error("DATABASE_URL environment variable not set");
     }
-    return this._connection;
+    // Create a new connection pool using the provided URL.
+    const pool = new Pool({
+      connectionString: url,
+    });
+    // Initialize Drizzle with the pool.
+    this.connection = drizzle(pool);
+  }
+
+  // Call this when you want to close the pool gracefully.
+  async close() {
+    await (this.connection.$client as unknown as pg.Pool).end();
   }
 }
 

@@ -10,9 +10,12 @@ const predefinedCampuses = [
 
 // Function to populate the campuses table with predefined rows
 async function populateCampuses() {
-  const db = Postgres.connection;
+  const db = new Postgres();
   try {
-    await db.insert(campuses).values(predefinedCampuses).onConflictDoNothing(); // Prevents duplicate inserts if data already exists
+    await db.connection
+      .insert(campuses)
+      .values(predefinedCampuses)
+      .onConflictDoNothing(); // Prevents duplicate inserts if data already exists
 
     console.log("Campuses populated successfully.");
   } catch (error) {
@@ -23,6 +26,6 @@ async function populateCampuses() {
 // Populates the db with UofT campuses
 // Might need to rerun / update the db if SOP changes campus names / anything of that nature
 (async () => {
-  //   await populateCampuses();
-  await upsertSOPClubs();
+  // await populateCampuses();
+  await upsertSOPClubs(); // testing SOP upsert logic
 })();

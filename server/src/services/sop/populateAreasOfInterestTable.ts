@@ -42,14 +42,15 @@ const predefinedAreasOfInterest = [
 
 // Function to populate the areas_of_interest table with predefined rows
 async function populateAreasOfInterest() {
-  const db = Postgres.connection;
+  const db = new Postgres();
   try {
-    await db
+    await db.connection
       .insert(areasOfInterest)
       .values(predefinedAreasOfInterest)
       .onConflictDoNothing(); // prevents duplicate inserts if data already exists
 
     console.log("Areas of Interest populated successfully.");
+    db.close();
   } catch (error) {
     console.error("Error populating Areas of Interest:", error);
   }

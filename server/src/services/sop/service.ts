@@ -1,4 +1,4 @@
-import { Postgres, type NeonConnection } from "../../db";
+import { Postgres, type PgConnection } from "../../db";
 import { clubs, clubAreasOfInterest, clubsCampuses } from "../../db/schema";
 import { sql } from "drizzle-orm";
 import { tryCatch } from "../../utils/errors";
@@ -29,12 +29,12 @@ export async function fetchAndValidateSOPData(): Promise<Club[]> {
  * Each club's upsert occurs in its own transaction.
  */
 export async function upsertSOPClubs() {
-  const db = Postgres.connection;
+  const db = new Postgres();
   return tryCatch(async () => {
     const sopClubs = await fetchAndValidateSOPData();
     let counter = 10;
     for (const sopClub of sopClubs) {
-      await upsertSingleClub(sopClub, db);
+      await upsertSingleClub(sopClub, db.connection);
       counter -= 1;
       if (counter === 0) {
         break;
@@ -43,6 +43,7 @@ export async function upsertSOPClubs() {
     console.log(
       `Successfully upserted ${sopClubs.length} clubs from SOP data.`
     );
+    db.close();
   });
 }
 
@@ -50,7 +51,7 @@ export async function upsertSOPClubs() {
  * Upsert a single club and its relationships within its own transaction.
  * Uses onConflictDoUpdate for upserts and onConflictDoNothing for the composite tables.
  */
-async function upsertSingleClub(sopClub: Club, db: NeonConnection) {
+async function upsertSingleClub(sopClub: Club, db: PgConnection) {
   await db.transaction(async (tx) => {
     // Prepare club data.
     const instagramUrl = sopClub.social_Media?.instagram;

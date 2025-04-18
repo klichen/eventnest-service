@@ -68,7 +68,11 @@ export const clubInstagramTokens = p.pgTable("club_instagram_tokens", {
     .uuid("club_id")
     .primaryKey()
     .references(() => clubs.id),
-  instagramUsername: p.text("instagram_username").notNull().unique(),
+  instagramUsername: p
+    .text("instagram_username")
+    .notNull()
+    .unique()
+    .references(() => clubs.instagramUsername),
   accessToken: p.text("access_token").notNull(),
   expiration: p.timestamp("expiration").notNull(),
 });

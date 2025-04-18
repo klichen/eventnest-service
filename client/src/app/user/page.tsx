@@ -19,7 +19,7 @@ export default function InstagramSuccessPage() {
     async function exchangeCode() {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:3001/exchange-for-token', {
+        const response = await fetch('http://localhost:3001/api/auth/get-token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -28,7 +28,6 @@ export default function InstagramSuccessPage() {
         });
 
         if (!response.ok) {
-          console.log('GOT HERE?');
           const errorResponse = await response.json();
           setError(errorResponse.error || 'Failed to exchange code for token');
           return;

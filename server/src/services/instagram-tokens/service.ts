@@ -22,30 +22,32 @@ const clubRepo = new ClubRepo();
 export async function handleTokenExchange(code: string) {
   // 1) Exchange code for a short‑lived token
   const short = await exchangeForShortLivedToken(code);
+  console.log("short access token:", short.access_token);
 
   const instagramUsername = await fetchInstagramUsername(short.access_token);
+  console.log("ig username:", instagramUsername);
 
   // 2) check whether this club exists in our db (registered with SOP)
   const clubId = await validateAccount(instagramUsername);
   if (clubId === "notfound") {
     return {
       success: false,
-      reason: "Instagram acount is not linked to a registered club on SOP",
+      reason: "notfound",
     };
   }
 
   // TODO create new state in frontend to show that user must be registered with SOP
 
   // 3) Exchange short‑lived token for a long‑lived token
-  const long = await exchangeForLongLivedToken(short.access_token);
+  // const long = await exchangeForLongLivedToken(short.access_token);
 
   // 4) Persist in DB
-  await upsertInstagramToken(
-    clubId,
-    instagramUsername,
-    long.access_token,
-    long.expires_in
-  );
+  // await upsertInstagramToken(
+  //   clubId,
+  //   instagramUsername,
+  //   long.access_token,
+  //   long.expires_in
+  // );
 
   return {
     success: true,

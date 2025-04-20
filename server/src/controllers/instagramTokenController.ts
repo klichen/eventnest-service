@@ -8,16 +8,16 @@ export async function exchangeForToken(req: Request, res: Response) {
       error:
         "Authorization code is missing - this comes from Instagram auth redirect",
     });
-  }
-
-  try {
-    const result = await tokenService.handleTokenExchange(code);
-    res.json(result);
-  } catch (err: any) {
-    console.error("Error exchanging code for token:", err);
-    res
-      .status(err.statusCode ?? 500)
-      .json({ error: err.message ?? "Failed to exchange code for token" });
+  } else {
+    try {
+      const result = await tokenService.handleTokenExchange(code);
+      res.json(result);
+    } catch (err: any) {
+      console.error("Error exchanging code for token:", err);
+      res
+        .status(err.statusCode ?? 500)
+        .json({ error: err.message ?? "Failed to exchange code for token" });
+    }
   }
 }
 

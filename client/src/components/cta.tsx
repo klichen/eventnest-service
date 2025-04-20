@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import InstagramIcon from '@/components/ui/InstagramIcon';
+import 'dotenv/config';
 
 export default function CTA() {
+  const REDIRECT_URI = process.env.REDIRECT_URI;
   return (
     <section id="join" className="w-full py-12 md:py-24 lg:py-32">
       <div className="px-4 md:px-6">
@@ -20,7 +22,7 @@ export default function CTA() {
               <Link
                 target="_blank"
                 // try changing the permissions? I don't need manage insights, comments, etc.
-                href="https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id=647835774345011&redirect_uri=https://localhost:3000/user&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights"
+                href={`https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id=647835774345011&redirect_uri=${REDIRECT_URI}&response_type=code&scope=instagram_business_basic`}
               >
                 <InstagramIcon className="h-5 w-5" />
                 Authorize with Instagram

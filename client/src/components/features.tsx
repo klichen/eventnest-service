@@ -14,8 +14,8 @@ export default function Features() {
               Simplify Event Promotion
             </h2>
             <p className="text-muted-foreground max-w-[900px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              UofT EventNest helps university clubs reach more students by promoting events across
-              campus networks.
+              UofT EventNest helps university clubs reach more students by promoting events in the
+              official UofT mobile app
             </p>
           </div>
         </div>

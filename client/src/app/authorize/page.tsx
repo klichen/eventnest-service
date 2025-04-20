@@ -4,22 +4,27 @@ import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import 'dotenv/config';
 
-export default function InstagramSuccessPage() {
+export default function AuthorizationPage() {
+  const router = useRouter();
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
-  // TODO add error handling if `error` is in returned search params
+  const igError = searchParams.get('error');
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unregistered, setUnregistered] = useState<boolean>(false);
 
   useEffect(() => {
     async function exchangeCode() {
       try {
-        setLoading(true);
-        const response = await fetch('http://localhost:3001/api/auth/get-token', {
+        const apiUrl = `${API_BASE_URL}/api/auth/get-token`;
+        console.log(apiUrl);
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -34,8 +39,8 @@ export default function InstagramSuccessPage() {
         }
 
         const exchangeResponse = await response.json();
-        if (!exchangeResponse.success) {
-          setError('Failed to exchange code for token');
+        if (!exchangeResponse.success && exchangeResponse.reason === 'notfound') {
+          setUnregistered(true);
         }
         return exchangeResponse;
       } catch (err) {
@@ -45,10 +50,19 @@ export default function InstagramSuccessPage() {
       }
     }
 
+    if (!code && !igError) {
+      router.push('/');
+    }
+
     if (code) {
       exchangeCode();
     }
-  }, [code]);
+
+    // error handling for cancelled IG auth
+    if (igError) {
+      setError('Instagram authorization cancelled');
+    }
+  }, [code, igError, API_BASE_URL, router]);
 
   if (loading) {
     return (
@@ -67,6 +81,25 @@ export default function InstagramSuccessPage() {
         <div className="rounded bg-white p-6 text-center shadow-md">
           <h2 className="mb-2 text-xl font-bold text-red-600">Error</h2>
           <p className="text-gray-600">There was an error processing your request: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (unregistered) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="rounded bg-white p-6 text-center shadow-md">
+          <h2 className="mb-2 text-xl font-bold text-red-600">Student Group Not Found</h2>
+          <p className="text-gray-600">
+            Your Instagram acount must be associated with a registered group under{' '}
+            <a href="https://sop.utoronto.ca/groups/" target="_blank" className="text-blue-500">
+              UofT SOP
+            </a>
+          </p>
+          <Button asChild className="mt-3 w-full cursor-pointer">
+            <Link href="/">Return to Main Screen</Link>
+          </Button>
         </div>
       </div>
     );
@@ -91,7 +124,7 @@ export default function InstagramSuccessPage() {
         </p>
 
         <Button className="w-full">
-          <Link href="/">Return to Home</Link>
+          <Link href="/">Return to Main Screen</Link>
         </Button>
       </Card>
     </div>

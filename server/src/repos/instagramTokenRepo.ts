@@ -49,7 +49,6 @@ export class InstagramTokenRepo {
 
   /**
    * Fetch all token records that expire before the given cutoff date.
-   * Useful for scheduling refresh jobs.
    */
   async findExpiring(cutoff: Date): Promise<ClubInstagramTokenRecord[]> {
     return await this.db
@@ -59,7 +58,7 @@ export class InstagramTokenRepo {
   }
 
   /**
-   * Delete a token record for a club (if needed).
+   * Delete a token record for a club.
    */
   async deleteByClubId(clubId: string): Promise<void> {
     await this.db

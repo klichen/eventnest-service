@@ -172,11 +172,14 @@ async function upsertInstagramToken(
  */
 export async function refreshExpiringTokens(): Promise<number> {
   const now = new Date();
-  const daysThreshold = 10;
+  const daysThreshold = 15;
   const cutoff = new Date(now.getTime() + daysThreshold * 24 * 60 * 60 * 1000);
 
   const expiringTokens = await tokenRepo.findExpiring(cutoff);
-  if (expiringTokens.length === 0) return 0;
+  if (expiringTokens.length === 0) {
+    console.log("No expiring tokens found");
+    return 0;
+  }
 
   let count = 0;
   for (const t of expiringTokens) {

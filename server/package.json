@@ -12,7 +12,8 @@
     "db:migrate": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "populateBase": "tsx ./src/services/sop/populateAreasOfInterestTable.ts && tsx ./src/services/sop/populateCampusesTable.ts",
-    "populateCampuses": "tsx ./src/services/sop/populateCampusesTable.ts"
+    "populateCampuses": "tsx ./src/services/sop/populateCampusesTable.ts",
+    "testFunc": "tsx ./src/utils/testFunctions.ts"
   },
   "author": "kebin",
   "license": "ISC",

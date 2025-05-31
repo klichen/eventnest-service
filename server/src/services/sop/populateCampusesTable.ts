@@ -1,6 +1,5 @@
 import { Postgres } from "../../db";
 import { campuses } from "../../db/schema";
-import { upsertSOPClubs } from "./service";
 
 const predefinedCampuses = [
   { id: 24, key: "st-george", value: "St George" },
@@ -26,6 +25,5 @@ async function populateCampuses() {
 // Populates the db with UofT campuses
 // Might need to rerun / update the db if SOP changes campus names / anything of that nature
 (async () => {
-  // await populateCampuses();
-  await upsertSOPClubs(); // testing SOP upsert logic
+  await populateCampuses();
 })();

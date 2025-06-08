@@ -18,7 +18,7 @@ export const clubs = p.pgTable("clubs", {
 
 // areas_of_interest table
 export const areasOfInterest = p.pgTable("areas_of_interest", {
-  id: p.integer("id").primaryKey(),
+  id: p.integer("id").primaryKey(), // matches SOP APi ids
   key: p.text("key").notNull(),
   value: p.text("value").notNull(),
 });
@@ -41,7 +41,7 @@ export const clubAreasOfInterest = p.pgTable(
 
 // campuses table
 export const campuses = p.pgTable("campuses", {
-  id: p.integer("id").primaryKey(),
+  id: p.integer("id").primaryKey(), // matches SOP APi ids
   key: p.text("key").notNull(),
   value: p.text("value").notNull(),
 });
@@ -77,16 +77,22 @@ export const clubInstagramTokens = p.pgTable("club_instagram_tokens", {
   expiration: p.timestamp("expiration").notNull(),
 });
 
+export const postStatusEnum = p.pgEnum("status_enum", [
+  "unprocessed",
+  "processing",
+  "processed",
+]);
+
 // instagram_posts table
 export const instagramPosts = p.pgTable(
   "instagram_posts",
   {
-    id: p.uuid("id").primaryKey(),
+    id: p.uuid("id").primaryKey().defaultRandom(),
     caption: p.text("caption"),
     postUrl: p.text("post_url").notNull(),
     imageUrl: p.text("image_url").notNull(),
     createdOn: p.timestamp("created_on").notNull(),
-    status: p.text("status").notNull(),
+    status: postStatusEnum("status").notNull(),
     clubId: p
       .uuid("club_id")
       .notNull()
@@ -99,7 +105,7 @@ export const instagramPosts = p.pgTable(
 export const events = p.pgTable(
   "events",
   {
-    id: p.uuid("id").primaryKey(),
+    id: p.uuid("id").primaryKey().defaultRandom(),
     title: p.text("title").notNull(),
     description: p.text("description"),
     startDatetime: p.timestamp("start_datetime").notNull(),

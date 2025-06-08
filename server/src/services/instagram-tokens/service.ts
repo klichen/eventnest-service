@@ -157,6 +157,7 @@ async function upsertInstagramToken(
 }
 
 /**
+ * INSTAGRAM API DOC
  * Your app user's long-lived access token can be refreshed for another 60 days as long as the existing conditions are true:
 
     The existing long-lived access token is at least 24 hours old
@@ -170,6 +171,7 @@ async function upsertInstagramToken(
  * refreshes the endpoint and updates the db.
  * Returns the count of tokens successfully refreshed.
  */
+// TODO - CRON JOB > every 2 days
 export async function refreshExpiringTokens(): Promise<number> {
   const now = new Date();
   const daysThreshold = 15;

@@ -17,6 +17,13 @@ export class InstagramTokenRepo {
     this.db = pg.connection;
   }
   /**
+   * Fetch all tokens
+   */
+  async getAllTokens(): Promise<ClubInstagramTokenRecord[]> {
+    return await this.db.select().from(clubInstagramTokens);
+  }
+
+  /**
    * Insert or update a token record for a given club.
    * On conflict (same clubId), it updates all fields.
    */

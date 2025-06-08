@@ -5,3 +5,20 @@ export function extractInstagramUsername(url: string) {
   const match = url.match(regex);
   return match ? match[1] : null;
 }
+
+/**
+ * Ensure the URL ends with exactly "/media"
+ * (no trailing slashes or double‐slashes)
+ */
+export function createMediaUrl(url: string): string {
+  // 1) Remove any trailing slashes
+  const trimmed = url.replace(/\/+$/g, "");
+
+  // 3) Otherwise append "/media"
+  return `${trimmed}/media`;
+}
+
+export function hoursAgoToUnix(hours: number): number {
+  const msAgo = hours * 60 * 60 * 1000;
+  return Math.floor((Date.now() - msAgo) / 1000);
+}

@@ -28,17 +28,18 @@ export async function fetchAndValidateSOPData(): Promise<Club[]> {
  * Upsert all clubs and their related data (areas_of_interest, campuses).
  * Each club's upsert occurs in its own transaction.
  */
-export async function upsertSOPClubs() {
+// TODO - CRON JOB > weekly on Sundays at 3am
+export async function syncSOPClubs() {
   const db = new Postgres();
   return tryCatch(async () => {
     const sopClubs = await fetchAndValidateSOPData();
-    let counter = 10;
+    // let counter = 10;
     for (const sopClub of sopClubs) {
       await upsertSingleClub(sopClub, db.connection);
-      counter -= 1;
-      if (counter === 0) {
-        break;
-      }
+      // counter -= 1;
+      // if (counter === 0) {
+      //   break;
+      // }
     }
     console.log(
       `Successfully upserted ${sopClubs.length} clubs from SOP data.`

@@ -35,6 +35,7 @@ export async function fetchAndSaveAllInstagramPosts(): Promise<void> {
         );
         continue;
       }
+      console.log(`Found ${rawPosts.length} posts for ${tk.instagramUsername}`);
 
       // 3) Convert to our insert shape
       const toSave: NewInstagramPost[] = rawPosts.map((p) => ({
@@ -46,8 +47,11 @@ export async function fetchAndSaveAllInstagramPosts(): Promise<void> {
         clubId: tk.clubId,
       }));
 
-      // 4) Persist (bulk insert; skip duplicates by postUrl)
+      // 4) Update DB
       await postRepo.saveMany(toSave);
+      console.log(
+        `Saved ${toSave.length} posts for ${tk.instagramUsername} in DB`
+      );
     } catch (err) {
       console.error(
         `Error fetching/saving posts for clubId=${tk.clubId}:`,

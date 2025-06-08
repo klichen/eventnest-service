@@ -6,10 +6,7 @@ import { z } from "zod";
 const instagramPostStatusSchema = z.enum(postStatusEnum.enumValues);
 export type PostStatus = z.infer<typeof instagramPostStatusSchema>;
 
-// “Select” gives you the full row as it comes out of SELECT queries:
 export type InstagramPostRecord = InferSelectModel<typeof instagramPosts>;
-
-// “Insert” gives you exactly what you need to pass to .insert(...):
 export type NewInstagramPost = InferInsertModel<typeof instagramPosts>;
 
 export class InstagramPostRepo {
@@ -21,7 +18,7 @@ export class InstagramPostRepo {
   }
 
   /**
-   * Bulk‐insert (or upsert) an array of InstagramPostRecord.
+   * Bulk‐insert (or upsert) an array of NewInstagramPost.
    * - If a postUrl already exists, skip inserting it.
    * - Otherwise, insert it with status = "unprocessed".
    */
@@ -35,7 +32,7 @@ export class InstagramPostRepo {
   }
 
   /**
-   * Optionally fetch existing posts for a given club
+   * Fetch existing posts for a given club
    */
   async findByClubId(clubId: string) {
     return await this.db
@@ -45,8 +42,7 @@ export class InstagramPostRepo {
   }
 
   /**
-   * (Later) you might want to update status or delete old posts, etc.
-   * Example: mark as "processing" or "processed" by post URL.
+   * Update post status
    */
   async updateStatusByPostUrl(
     postUrl: string,

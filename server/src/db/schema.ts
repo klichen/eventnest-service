@@ -11,7 +11,7 @@ export const clubs = p.pgTable("clubs", {
   twitterUrl: p.text("twitter_url"),
   instagramUrl: p.text("instagram_url"),
   websiteUrl: p.text("website_url"),
-  instagramUsername: p.text("instagram_username"),
+  instagramUsername: p.text("instagram_username").unique(),
   lastModifiedDate: p.timestamp("last_modified_date").notNull(),
   externalId: p.integer("external_id").notNull().unique(),
 });
@@ -68,11 +68,7 @@ export const clubInstagramTokens = p.pgTable("club_instagram_tokens", {
     .uuid("club_id")
     .primaryKey()
     .references(() => clubs.id),
-  instagramUsername: p
-    .text("instagram_username")
-    .notNull()
-    .unique()
-    .references(() => clubs.instagramUsername),
+  instagramUsername: p.text("instagram_username").notNull().unique(),
   accessToken: p.text("access_token").notNull(),
   expiration: p.timestamp("expiration").notNull(),
 });
@@ -89,7 +85,7 @@ export const instagramPosts = p.pgTable(
   {
     id: p.uuid("id").primaryKey().defaultRandom(),
     caption: p.text("caption"),
-    postUrl: p.text("post_url").notNull(),
+    postUrl: p.text("post_url").notNull().unique(),
     imageUrl: p.text("image_url").notNull(),
     createdOn: p.timestamp("created_on").notNull(),
     status: postStatusEnum("status").notNull(),

@@ -29,20 +29,16 @@ export async function fetchAndValidateSOPData(): Promise<Club[]> {
  * Each club's upsert occurs in its own transaction.
  */
 // TODO - CRON JOB > weekly on Sundays at 3am
-export async function syncSOPClubs() {
+export async function syncSOPClubs(isDev = false) {
   const db = new Postgres();
   return tryCatch(async () => {
     const sopClubs = await fetchAndValidateSOPData();
-    // let counter = 10;
-    for (const sopClub of sopClubs) {
+    const clubsToUpsert = isDev ? sopClubs.slice(0, 10) : sopClubs;
+    for (const sopClub of clubsToUpsert) {
       await upsertSingleClub(sopClub, db.connection);
-      // counter -= 1;
-      // if (counter === 0) {
-      //   break;
-      // }
     }
     console.log(
-      `Successfully upserted ${sopClubs.length} clubs from SOP data.`
+      `Successfully upserted ${clubsToUpsert.length} clubs from SOP data.`
     );
     db.close();
   });

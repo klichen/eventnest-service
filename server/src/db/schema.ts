@@ -105,7 +105,7 @@ export const events = p.pgTable(
     title: p.text("title").notNull(),
     description: p.text("description"),
     startDatetime: p.timestamp("start_datetime").notNull(),
-    endDatetime: p.timestamp("end_datetime").notNull(),
+    endDatetime: p.timestamp("end_datetime"),
     location: p.text("location").notNull(),
     postId: p
       .uuid("post_id")

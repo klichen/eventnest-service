@@ -50,6 +50,10 @@ export async function handleTokenExchange(code: string) {
     long.expires_in
   );
 
+  console.log(
+    `Successfully acquired token for club ${clubId} (${instagramUsername})`
+  );
+
   return {
     success: true,
   };

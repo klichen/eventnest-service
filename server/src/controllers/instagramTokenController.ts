@@ -20,17 +20,3 @@ export async function exchangeForToken(req: Request, res: Response) {
     }
   }
 }
-
-/**
- * (Optional) Trigger token refresh for all tokens nearing expiry.
- * Later you can schedule this with node-cron instead of exposing as an endpoint.
- */
-// export async function refreshTokens(req: Request, res: Response) {
-//   try {
-//     const refreshed = await tokenService.refreshExpiringTokens();
-//     return res.json({ success: true, refreshedCount: refreshed });
-//   } catch (err: any) {
-//     console.error("Error refreshing tokens:", err);
-//     return res.status(500).json({ error: "Failed to refresh tokens" });
-//   }
-// }

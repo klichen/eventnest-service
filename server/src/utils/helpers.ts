@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 export function extractInstagramUsername(url: string) {
   // Matches the Instagram URL, captures the username, and then ignores the rest.
   const regex =
@@ -38,4 +40,30 @@ export async function resolveInstagramMediaUrl(
 
   // `res.url` is the final URL after following all redirects
   return res.url;
+}
+
+/**
+ * Converts an ISO‐8601 string like "2025-05-19T18:00:00Z"
+ * —where the "Z" is really just a placeholder—into a JS Date
+ * that represents that wall‐clock time in Eastern Time,
+ * normalized to actual UTC.
+ *
+ * E.g. "2025-05-19T18:00:00Z" (meaning 6pm ET) → 2025-05-19T22:00:00.000Z
+ *
+ * @param isoWithZ an ISO string ending in "Z"
+ * @returns a JS Date whose UTC instant matches the ET wall‐clock time
+ * @throws if the input isn’t a valid ISO date
+ */
+export function parseESTIsoAsUtc(isoWithZ: string): Date {
+  // 1) Drop the Z so we don’t treat it as UTC
+  const bareIso = isoWithZ.replace(/Z$/, "");
+
+  // 2) Parse in America/New_York (handles EST vs. EDT automatically)
+  const dt = DateTime.fromISO(bareIso, { zone: "America/Toronto" });
+  if (!dt.isValid) {
+    throw new Error(`Invalid ISO date: ${isoWithZ}`);
+  }
+
+  // 3) toJSDate() returns a JS Date (UTC‐based under the hood)
+  return dt.toJSDate();
 }

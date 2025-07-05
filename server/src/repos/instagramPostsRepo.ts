@@ -51,13 +51,13 @@ export class InstagramPostRepo {
   /**
    * Update post status
    */
-  async updateStatusByPostUrl(
-    postUrl: string,
+  async updateStatusByPostId(
+    postId: string,
     newStatus: InstagramPostRecord["status"]
   ) {
     await this.db
       .update(instagramPosts)
       .set({ status: newStatus })
-      .where(eq(instagramPosts.postUrl, postUrl));
+      .where(eq(instagramPosts.id, postId));
   }
 }

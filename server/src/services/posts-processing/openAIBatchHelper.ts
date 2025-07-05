@@ -8,16 +8,16 @@ import os from "os";
 import type { InstagramPostRecord } from "../../repos/instagramPostsRepo";
 import { resolveInstagramMediaUrl } from "../../utils/helpers";
 
-export interface AIExtractedEvent {
+export interface AIResponse {
   postId: string;
-  title?: string;
-  description?: string;
-  startDatetime?: string;
-  endDatetime?: string;
-  location?: string;
+  title: string;
+  description: string;
+  startDatetime: string;
+  endDatetime: string;
+  location: string;
 }
 
-const AIExtractedEvent = z.object({
+export const AIExtractedEvent = z.object({
   title: z.string().nullable(),
   description: z.string().nullable(),
   startDatetime: z.string().nullable(),
@@ -35,45 +35,52 @@ export class OpenAIBatchHelper {
   // Determine if a list of posts is an event with an LLM
   public async processPosts(
     posts: InstagramPostRecord[]
-  ): Promise<AIExtractedEvent[] | Error> {
-    if (posts.length === 0) return new Error("there are no posts to process");
+  ): Promise<AIResponse[] | Error> {
+    try {
+      if (posts.length === 0) return new Error("there are no posts to process");
 
-    // 1. Serialize posts to JSONL and upload as an input file.
-    const jsonlPath = await this.createInstagramPostProcessingJsonlFile(posts);
-    const inputFile = await this.uploadFile(jsonlPath);
+      // 1. Serialize posts to JSONL and upload as an input file.
+      const jsonlPath = await this.createInstagramPostProcessingJsonlFile(
+        posts
+      );
+      const inputFile = await this.uploadFile(jsonlPath);
 
-    // 2. Kick off the batch job.
-    const batch = await this.createBatch(inputFile.id);
+      // 2. Kick off the batch job.
+      const batch = await this.createBatch(inputFile.id);
 
-    // 2.5 clean up jsonl file
-    await fs.promises.unlink(jsonlPath);
+      // 2.5 clean up jsonl file
+      await fs.promises.unlink(jsonlPath);
 
-    // 3. Wait for completion.
-    const completed = await this.waitForBatch(batch.id);
-    if (completed instanceof Error) {
-      console.log(`Batch ${batch.id} failed to complete`);
-      return new Error(`Batch ${batch.id} failed to complete`);
+      // 3. Wait for completion.
+      const completed = await this.waitForBatch(batch.id);
+      if (completed instanceof Error) {
+        console.log(`Batch ${batch.id} failed to complete`);
+        return new Error(`Batch ${batch.id} failed to complete`);
+      }
+      // 4. Get the output file.
+      const outputFileId = completed.output_file_id;
+      if (!outputFileId) {
+        return new Error("Batch finished without an output file id.");
+      }
+      const jsonString = await this.getBatchOutput(outputFileId);
+
+      // 5. Parse each line as JSON and extract needed fields.
+      const outputs = jsonString
+        .trim()
+        .split("\n")
+        .flatMap((line) => {
+          const res = JSON.parse(line);
+          return {
+            postId: res.custom_id,
+            ...JSON.parse(res.response.body.output[0].content[0].text),
+          };
+        });
+
+      return outputs;
+    } catch (error) {
+      console.log(error);
+      return new Error("An error occurred during post processing.");
     }
-    // 4. Get the output file.
-    const outputFileId = completed.output_file_id;
-    if (!outputFileId) {
-      return new Error("Batch finished without an output file id.");
-    }
-    const jsonString = await this.getBatchOutput(outputFileId);
-
-    // 5. Parse each line as JSON and extract needed fields.
-    const outputs = jsonString
-      .trim()
-      .split("\n")
-      .flatMap((line) => {
-        const res = JSON.parse(line);
-        return {
-          postId: res.custom_id,
-          ...JSON.parse(res.response.body.output[0].content[0].text),
-        };
-      });
-
-    return outputs;
   }
 
   private async createInstagramPostProcessingJsonlFile(
@@ -161,14 +168,16 @@ export class OpenAIBatchHelper {
 }
 
 export const eventDeterminationSystemPrompt = `
-You are an extractor that reads an Instagram post (caption + image) and determines whether or not this post is for an event. 
+You are an information-extraction assistant.
+Given an Instagram post (caption + image), determine whether it advertises a
+future event that someone could attend in person or online.
 
 Return **only** a JSON object with these fields:
-• title (one-line event title)  
-• description (concise summary of the event)  
-• startDatetime in ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ) or null 
-• endDatetime in ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ) or null 
+• title (one-line event title)
+• description (description with important details about the event)
+• startDatetime in ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ) or null
+• endDatetime in ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ) or null
 • location or null
 
-If a field if is not applicable or there is not enough information, set it as null
+If the post is NOT advertising an event (i.e. there is no location, date of gathering, the post is talking about a past event (using past tense), or the caption is about something unrelated to an event that is being hosted), leave all the fields blank
 `;

@@ -1,8 +1,11 @@
 import OpenAI from "openai";
-import { zodResponseFormat } from "openai/helpers/zod";
+import { zodResponseFormat, zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import "dotenv/config";
-import { eventDeterminationSystemPrompt } from "./openAIBatchHelper";
+import {
+  AIExtractedEvent,
+  eventDeterminationSystemPrompt,
+} from "./openAIBatchHelper";
 
 export async function resolveInstagramMediaUrl(
   mediaUrl: string
@@ -33,13 +36,6 @@ const DateTimeString = z.string().refine(
   }
 );
 
-const responseSchema = z.object({
-  title: z.string(),
-  summary: z.string(),
-  location: z.string().nullable(),
-  startDatetime: DateTimeString.nullable(),
-});
-
 async function main() {
   // const postRepo = new InstagramPostRepo();
   // const batchHelper = new OpenAIBatchHelper();
@@ -47,12 +43,13 @@ async function main() {
   // const outputJson = await batchHelper.processPosts(unprocessedPosts);
 
   // FOR TESTING LLM RESPONSE QUALITY
-  const postUrl = "https://www.instagram.com/p/DKpmYdVJV_T/media";
+  const postUrl = "https://www.instagram.com/p/DIwY8nYuP2z/media";
   const cdnUrl = await resolveInstagramMediaUrl(postUrl);
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    messages: [
+  const response = await openai.responses.create({
+    model: "gpt-4o-mini",
+    // model: "gpt-4.1-nano",
+    input: [
       {
         role: "system",
         content: eventDeterminationSystemPrompt,
@@ -61,23 +58,22 @@ async function main() {
         role: "user",
         content: [
           {
-            type: "text",
-            text: "Caption: Join us for board games on Monday May 19th, 2025 @ Wilson Hall WI2002",
+            type: "input_text",
+            text: "Caption: We're hiring executives for the 2025-2026 year!Want to make a difference and get more involved in UofT's climbing community? Join our executive team to bring your ideas to life, help run awesome events, and be part of an amazing crew! Apply now! All positions and responsibilities can be found in the application. Link in bio and below :) https://forms.gle/97V2scAhDyWZCT6d9",
           },
           {
-            type: "image_url",
-            image_url: {
-              url: cdnUrl, // Use the resolved CDN URL
-            },
+            type: "input_image",
+            image_url: cdnUrl,
+            detail: "low",
           },
         ],
       },
     ],
-    response_format: zodResponseFormat(
-      responseSchema,
-      "event_extraction_response"
-    ),
+    text: {
+      format: zodTextFormat(AIExtractedEvent, "EventDetermination"),
+    },
   });
-  console.log(response.choices[0].message.content);
+  // @ts-ignore
+  console.log(JSON.parse(response.output[0].content[0].text));
 }
 main();

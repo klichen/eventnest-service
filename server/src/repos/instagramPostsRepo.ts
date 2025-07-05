@@ -17,6 +17,13 @@ export class InstagramPostRepo {
     this.db = pg.connection;
   }
 
+  async getAllUnprocessedPosts() {
+    return await this.db
+      .select()
+      .from(instagramPosts)
+      .where(eq(instagramPosts.status, "unprocessed"));
+  }
+
   /**
    * Bulk‐insert (or upsert) an array of NewInstagramPost.
    * - If a postUrl already exists, skip inserting it.

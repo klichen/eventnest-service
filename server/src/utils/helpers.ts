@@ -22,3 +22,20 @@ export function hoursAgoToUnix(hours: number): number {
   const msAgo = hours * 60 * 60 * 1000;
   return Math.floor((Date.now() - msAgo) / 1000);
 }
+
+export async function resolveInstagramMediaUrl(
+  mediaUrl: string
+): Promise<string> {
+  // Use HEAD so you don’t download the whole image
+  const res = await fetch(mediaUrl, {
+    method: "GET",
+    redirect: "follow", // (default) follow 302 → CDN
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to resolve media URL (${res.status})`);
+  }
+
+  // `res.url` is the final URL after following all redirects
+  return res.url;
+}

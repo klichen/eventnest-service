@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import "dotenv/config";
+import { eventDeterminationSystemPrompt } from "./openAIBatchHelper";
 
 export async function resolveInstagramMediaUrl(
   mediaUrl: string
@@ -40,24 +41,21 @@ const responseSchema = z.object({
 });
 
 async function main() {
+  // const postRepo = new InstagramPostRepo();
+  // const batchHelper = new OpenAIBatchHelper();
+  // const unprocessedPosts = await postRepo.getAllUnprocessedPosts();
+  // const outputJson = await batchHelper.processPosts(unprocessedPosts);
+
+  // FOR TESTING LLM RESPONSE QUALITY
   const postUrl = "https://www.instagram.com/p/DKpmYdVJV_T/media";
   const cdnUrl = await resolveInstagramMediaUrl(postUrl);
-
-  const systemPrompt = `
-You are an extractor that reads an Instagram event post (caption + image) 
-and returns **only** a JSON object with these fields:
-• title (one-line event title)  
-• summary (short summary of the event)  
-• location or null  
-• startDatetime in ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ) or null 
-`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4.1-mini",
     messages: [
       {
         role: "system",
-        content: systemPrompt,
+        content: eventDeterminationSystemPrompt,
       },
       {
         role: "user",

@@ -50,6 +50,7 @@ export async function processInstagramEvents() {
               location: evt.location,
               startDatetime: evt.startDate,
               endDatetime: evt.endDate,
+              incentives: evt.incentives,
             },
           ]
         : [];
@@ -68,8 +69,15 @@ export async function processInstagramEvents() {
 }
 
 function processBatchItem(response: BatchOutputItem) {
-  const { postId, title, description, startDatetime, endDatetime, location } =
-    response;
+  const {
+    postId,
+    title,
+    description,
+    startDatetime,
+    endDatetime,
+    location,
+    incentives,
+  } = response;
 
   if (
     [title, description, startDatetime, location].every(
@@ -86,6 +94,7 @@ function processBatchItem(response: BatchOutputItem) {
       location,
       startDate,
       endDate,
+      incentives: incentives || null,
     };
   } else {
     return null;

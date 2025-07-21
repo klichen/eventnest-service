@@ -73,8 +73,8 @@ async function fetchInstagramPostIdsForToken(
   const url = new URL("https://graph.instagram.com/v22.0/me/media");
   url.searchParams.set("access_token", token);
   // Only fetch posts from the last 24 hours
-  // const sinceTimestamp = hoursAgoToUnix(24);
-  // url.searchParams.set("since", sinceTimestamp.toString());
+  const sinceTimestamp = hoursAgoToUnix(24);
+  url.searchParams.set("since", sinceTimestamp.toString());
 
   const res = await fetch(url.toString());
   if (!res.ok) {

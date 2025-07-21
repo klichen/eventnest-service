@@ -32,10 +32,7 @@ export class InstagramPostRepo {
   async saveMany(records: NewInstagramPost[]): Promise<void> {
     if (records.length === 0) return;
 
-    // Use onConflictDoNothing on postUrl to avoid duplicates.
-    await this.db.insert(instagramPosts).values(records).onConflictDoNothing({
-      target: instagramPosts.postUrl,
-    });
+    await this.db.insert(instagramPosts).values(records);
   }
 
   /**

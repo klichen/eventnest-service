@@ -4,7 +4,7 @@ import { z } from "zod";
 import "dotenv/config";
 import {
   AIExtractedEvent,
-  eventDeterminationSystemPrompt,
+  buildEventDeterminationSystemPrompt,
 } from "./openAIBatchHelper";
 
 export async function resolveInstagramMediaUrl(
@@ -36,6 +36,8 @@ const DateTimeString = z.string().refine(
   }
 );
 
+// PERKS (free pizza) example: https://www.instagram.com/p/C0j3n61ymoT/
+
 async function main() {
   // const postRepo = new InstagramPostRepo();
   // const batchHelper = new OpenAIBatchHelper();
@@ -43,8 +45,9 @@ async function main() {
   // const outputJson = await batchHelper.processPosts(unprocessedPosts);
 
   // FOR TESTING LLM RESPONSE QUALITY
-  const postUrl = "https://www.instagram.com/p/DIwY8nYuP2z/media";
+  const postUrl = "https://www.instagram.com/p/DKpmYdVJV_T/media";
   const cdnUrl = await resolveInstagramMediaUrl(postUrl);
+  const createdOn = new Date("2025-05-19 18:32:53");
 
   const response = await openai.responses.create({
     model: "gpt-4o-mini",
@@ -52,14 +55,14 @@ async function main() {
     input: [
       {
         role: "system",
-        content: eventDeterminationSystemPrompt,
+        content: buildEventDeterminationSystemPrompt(createdOn.toISOString()),
       },
       {
         role: "user",
         content: [
           {
             type: "input_text",
-            text: "Caption: We're hiring executives for the 2025-2026 year!Want to make a difference and get more involved in UofT's climbing community? Join our executive team to bring your ideas to life, help run awesome events, and be part of an amazing crew! Apply now! All positions and responsibilities can be found in the application. Link in bio and below :) https://forms.gle/97V2scAhDyWZCT6d9",
+            text: "Caption: Hey everyone! We are BACK to our regular 6pm starting time this week! We can't let that 30 minutes of GLG time go to waste! Like the past couple of weeks, we'll be in Wilson Hall room 2002. Hope to see you there!",
           },
           {
             type: "input_image",

@@ -14,6 +14,7 @@ export const AIExtractedEvent = z.object({
   startDatetime: z.string().nullable(),
   endDatetime: z.string().nullable(),
   location: z.string().nullable(),
+  incentives: z.string().nullable(), // e.g. free food or drinks
 });
 
 export const BatchOutputSchema = z.array(
@@ -24,6 +25,7 @@ export const BatchOutputSchema = z.array(
     startDatetime: z.string(),
     endDatetime: z.string(),
     location: z.string(),
+    incentives: z.string(),
   })
 );
 
@@ -98,6 +100,7 @@ export class OpenAIBatchHelper {
       posts.map(async (p) => ({
         id: p.id,
         caption: p.caption,
+        createdOn: p.createdOn,
         mediaUrl: await resolveInstagramMediaUrl(p.imageUrl),
       }))
     );
@@ -112,7 +115,9 @@ export class OpenAIBatchHelper {
             input: [
               {
                 role: "system",
-                content: eventDeterminationSystemPrompt,
+                content: buildEventDeterminationSystemPrompt(
+                  post.createdOn.toISOString()
+                ),
               },
               {
                 role: "user",
@@ -176,17 +181,27 @@ export class OpenAIBatchHelper {
   }
 }
 
-export const eventDeterminationSystemPrompt = `
+export function buildEventDeterminationSystemPrompt(
+  createdOnISO: string
+): string {
+  return `
 You are an information-extraction assistant.
-Given an Instagram post (caption + image), determine whether it advertises a
-future event that someone could attend in person or online.
 
-Return **only** a JSON object with these fields:
-• title (one-line event title)
-• description (description with important details about the event)
-• startDatetime in ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ) or null
-• endDatetime in ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ) or null
-• location or null
+The Instagram post was created on **${createdOnISO}** (this is your reference date/time for resolving any relative dates or inferring years).
 
-If the post is NOT advertising an event (i.e. there is no location, date of gathering, the post is talking about a past event (using past tense), or the caption is about something unrelated to an event that is being hosted), leave all the fields blank
+Your job is to analyze the Instagram post (caption + image) and decide if it's advertising a future event someone could attend (in person or online).
+Please treat information from captions with more weight. If there are contradictions between the image and caption, trust the information in the caption more since it can be updated after posting. 
+
+- If you detect a **future** event:
+  1. Resolve any relative dates (“next Friday”, “tomorrow”, etc.) against the creation date of ${createdOnISO}.  
+     • If that yields a date that is already past, assume the **next** occurrence (e.g. “next Friday” on Monday → that week; on Friday → the following week).  
+  2. If an absolute date is given (e.g. “May 19th”), infer the correct year based on ${createdOnISO}.  
+  3. Output a JSON object with these fields (use null when a field is missing or irrelevant):
+     • **title**: one-line event title  
+     • **description**: important details about the event 
+     • **startDatetime**: ISO 8601 (YYYY-MM-DDTHH:mm:ssZ) or null
+     • **endDatetime**: ISO 8601 (YYYY-MM-DDTHH:mm:ssZ) or null  
+     • **location**: location string (address, “Zoom”, etc.) or null
+     • **incentives**: any perks or amenities offered that might be pique a student's interest (e.g. free food, drinks, giveaways, exclusive benefits) as a string, or null
 `;
+}

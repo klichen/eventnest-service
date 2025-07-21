@@ -8,15 +8,6 @@ import os from "os";
 import type { InstagramPostRecord } from "../../repos/instagramPostsRepo";
 import { resolveInstagramMediaUrl } from "../../utils/helpers";
 
-export interface AIResponse {
-  postId: string;
-  title: string;
-  description: string;
-  startDatetime: string;
-  endDatetime: string;
-  location: string;
-}
-
 export const AIExtractedEvent = z.object({
   title: z.string().nullable(),
   description: z.string().nullable(),
@@ -24,6 +15,20 @@ export const AIExtractedEvent = z.object({
   endDatetime: z.string().nullable(),
   location: z.string().nullable(),
 });
+
+export const BatchOutputSchema = z.array(
+  z.object({
+    postId: z.string(),
+    title: z.string(),
+    description: z.string(),
+    startDatetime: z.string(),
+    endDatetime: z.string(),
+    location: z.string(),
+  })
+);
+
+export type BatchOutput = z.infer<typeof BatchOutputSchema>;
+export type BatchOutputItem = BatchOutput[number];
 
 export class OpenAIBatchHelper {
   private openai: OpenAI;
@@ -35,7 +40,7 @@ export class OpenAIBatchHelper {
   // Determine if a list of posts is an event with an LLM
   public async processPosts(
     posts: InstagramPostRecord[]
-  ): Promise<AIResponse[] | Error> {
+  ): Promise<BatchOutput | Error> {
     try {
       if (posts.length === 0) return new Error("there are no posts to process");
 
@@ -152,7 +157,11 @@ export class OpenAIBatchHelper {
   ): Promise<Batch | Error> {
     while (true) {
       const b = await this.openai.batches.retrieve(batchId);
-      if (b.status === "completed") return b;
+      if (b.status === "completed") {
+        console.log("batch completed, proceeding...");
+        return b;
+      }
+
       if (b.status === "failed" || b.status === "expired") {
         return new Error(`Batch ${batchId} finished with status ${b.status}`);
       }

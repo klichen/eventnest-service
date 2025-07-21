@@ -1,16 +1,17 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-
 import {
   OpenAIBatchHelper,
-  AIExtractedEvent,
-  type AIResponse,
+  BatchOutputSchema,
+  type BatchOutput,
+  type BatchOutputItem,
 } from "./openAIBatchHelper";
 import { InstagramPostRepo } from "../../repos/instagramPostsRepo";
-import { parseESTIsoAsUtc } from "../../utils/helpers";
+import { fieldIsEmptyOrNullish, processDatetimeString } from "./helpers";
+import { EventsRepo } from "../../repos/eventsRepo";
 
 // TODO refactor this to use DI, initialize in one place and pass to necessary components
 // check how this will need to be done when setting on the cron jobs
 const postRepo = new InstagramPostRepo();
+const eventsRepo = new EventsRepo();
 const batchHelper = new OpenAIBatchHelper();
 
 export async function processInstagramEvents() {
@@ -27,18 +28,46 @@ export async function processInstagramEvents() {
     const aiResponses = await batchHelper.processPosts(postsToProcess);
     if (aiResponses instanceof Error) return new Error(aiResponses.message);
 
+    // parse with zod
+    let aiResults: BatchOutput;
+    const result = BatchOutputSchema.safeParse(aiResponses);
+    if (!result.success) {
+      return new Error("AI response did not match required schema");
+    } else {
+      aiResults = result.data;
+    }
+
     // 3. Extract events + update post status to processed.
+    console.log("Extracting events from AI responses");
+    const events = aiResults.flatMap((res) => {
+      const evt = processBatchItem(res);
+      return evt
+        ? [
+            {
+              postId: evt.postId,
+              title: evt.title,
+              description: evt.description,
+              location: evt.location,
+              startDatetime: evt.startDate,
+              endDatetime: evt.endDate,
+            },
+          ]
+        : [];
+    });
 
     // 4. Persist events in db.
+    await eventsRepo.saveMany(events);
 
-    console.log(`Processed ${postsToProcess.length} posts; created X events.`);
+    console.log(
+      `Processed ${postsToProcess.length} posts; created ${events.length} events.`
+    );
   } catch (error) {
     console.log(error);
     return new Error("An error occurred while processing instagram posts");
   }
 }
 
-function processAiResponse(response: AIResponse) {
+function processBatchItem(response: BatchOutputItem) {
   const { postId, title, description, startDatetime, endDatetime, location } =
     response;
 
@@ -48,6 +77,7 @@ function processAiResponse(response: AIResponse) {
     )
   ) {
     const startDate = processDatetimeString(startDatetime);
+    if (startDate === null) return null;
     const endDate = processDatetimeString(endDatetime);
     return {
       postId,
@@ -60,21 +90,4 @@ function processAiResponse(response: AIResponse) {
   } else {
     return null;
   }
-}
-
-function fieldIsEmptyOrNullish(field: string) {
-  if (field === null) return true;
-
-  const trimmed = field.trim();
-  if (trimmed === "" || trimmed.length < 8) return true;
-
-  return /null|undefined/i.test(trimmed);
-}
-
-/**
- * Handles the AI outputted datetimes by converting from EST to the correct UTC date object
- */
-function processDatetimeString(date: string) {
-  if (fieldIsEmptyOrNullish(date)) return null;
-  return parseESTIsoAsUtc(date);
 }

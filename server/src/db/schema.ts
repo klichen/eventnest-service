@@ -85,7 +85,7 @@ export const instagramPosts = p.pgTable(
   {
     id: p.uuid("id").primaryKey().defaultRandom(),
     caption: p.text("caption"),
-    postUrl: p.text("post_url").notNull().unique(),
+    postUrl: p.text("post_url").notNull(), // not unique because sometimes clubs can collaborate on posts and it would be under both their accounts
     imageUrl: p.text("image_url").notNull(),
     createdOn: p.timestamp("created_on").notNull(),
     status: postStatusEnum("status").notNull(),

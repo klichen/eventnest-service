@@ -14,12 +14,14 @@
     "populateBase": "tsx ./src/services/sop/populateAreasOfInterestTable.ts && tsx ./src/services/sop/populateCampusesTable.ts && tsx ./src/services/sop/populateClubs.ts",
     "populateCampuses": "tsx ./src/services/sop/populateCampusesTable.ts",
     "testFunc": "tsx ./src/utils/testFunctions.ts",
-    "testAI": "tsx ./src/services/posts-processing/openaiTest.ts"
+    "testAI": "tsx ./src/services/posts-processing/openaiTest.ts",
+    "generateNewApiKey": "tsx ./src/utils/generateApiKey.ts --client madlab --env dev"
   },
   "author": "kebin",
   "license": "ISC",
   "dependencies": {
     "@types/cors": "^2.8.17",
+    "commander": "^14.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.41.0",

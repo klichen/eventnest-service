@@ -115,3 +115,14 @@ export const events = p.pgTable(
   },
   (table) => [p.index("post_id_idx").on(table.postId)]
 );
+
+export const apiKeys = p.pgTable("api_keys", {
+  id: p.uuid("id").defaultRandom().primaryKey(),
+  consumerName: p.text("consumer_name").notNull(),
+  prefix: p.varchar("prefix", { length: 16 }).notNull(),
+  hash: p.char("hash", { length: 64 }).notNull(), // sha-256 hex
+  createdAt: p.timestamp("created_at").defaultNow(),
+  revokedAt: p.timestamp("revoked_at"),
+});
+
+export type ApiKeysRecord = typeof apiKeys.$inferSelect;

@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import cors from "cors";
 import "dotenv/config";
 import instagramTokenRoutes from "./routes/instagramTokenRoutes";
+import { requireApiKey } from "./middlewares/apiKeyAuth";
 
 const app = express();
 
@@ -16,11 +17,19 @@ const corsOptions = {
   // headers: 'Content-Type, Authorization, Content-Length, X-Requested-With',
 };
 
+/* ─────────────  generic middleware  ───────────── */
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// instagram token/authorization routes
+/* ─────────────  PUBLIC routes first  ───────────── */
+
+// instagram token/authorization routes - club leaders will hit this endpoint to give us instagram permissions
 app.use("/api/auth", instagramTokenRoutes);
+
+/* ─────────────  API-key guard  ───────────── */
+app.use(requireApiKey);
+
+/* ─────────────  PROTECTED routes  ───────────── */
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

@@ -23,6 +23,7 @@ export class ClubRepo {
   private db: PgConnection;
 
   constructor() {
+    // TODO use dependency injection for db
     const pg = new Postgres();
     this.db = pg.connection;
   }

@@ -1,0 +1,151 @@
+// src/repositories/ClubRepo.ts
+
+import { Postgres, type PgConnection } from "../../db";
+import {
+  clubs,
+  clubsCampuses,
+  campuses,
+  clubAreasOfInterest,
+  areasOfInterest,
+  clubInstagramTokens,
+} from "../../db/schema";
+import { and, eq, or, SQL, sql } from "drizzle-orm";
+import type { ClubEntity } from "./entities";
+import type { ClubsFilter } from "../../services/clubs/types";
+
+export interface ClubRecord {
+  id: string;
+  name: string;
+  description?: string | null;
+  groupUrl?: string | null;
+  groupEmail?: string | null;
+  facebookUrl?: string | null;
+  twitterUrl?: string | null;
+  instagramUrl?: string | null;
+  websiteUrl?: string | null;
+  instagramUsername?: string | null;
+  lastModifiedDate: Date;
+  externalId: number;
+}
+
+export class ClubsRepo {
+  private db: PgConnection;
+
+  constructor() {
+    // TODO use dependency injection for db
+    const pg = new Postgres();
+    this.db = pg.connection;
+  }
+
+  async findClubs(
+    offset: number,
+    limit: number,
+    reqFilters: ClubsFilter
+  ): Promise<ClubEntity[] | Error> {
+    try {
+      const filters: SQL[] = [];
+      // TODO add filters
+      const res = await this.db
+        .select({
+          id: clubs.id,
+          name: clubs.name,
+          description: clubs.description,
+          groupUrl: clubs.groupUrl,
+          groupEmail: clubs.groupEmail,
+          facebookUrl: clubs.facebookUrl,
+          twitterUrl: clubs.twitterUrl,
+          instagramUrl: clubs.instagramUrl,
+          websiteUrl: clubs.websiteUrl,
+          instagramUsername: clubs.instagramUsername,
+          campuses: sql<string | null>`
+        STRING_AGG(DISTINCT ${campuses.value}, ',')
+        `.as("campuses"),
+          areasOfInterest: sql<string | null>`
+        STRING_AGG(DISTINCT ${areasOfInterest.value}, ',')
+        `.as("areas_of_interest"),
+          connectedToEventNest: sql<boolean>`
+        EXISTS (
+          SELECT 1
+          FROM ${clubInstagramTokens} AS cit
+          WHERE cit.club_id = ${clubs.id}
+        )
+        `.as("connected_to_event_nest"),
+        })
+        .from(clubs)
+        .leftJoin(clubsCampuses, eq(clubsCampuses.clubId, clubs.id))
+        .leftJoin(campuses, eq(campuses.id, clubsCampuses.campusId))
+        .leftJoin(clubAreasOfInterest, eq(clubAreasOfInterest.clubId, clubs.id))
+        .leftJoin(
+          areasOfInterest,
+          eq(areasOfInterest.id, clubAreasOfInterest.interestId)
+        )
+        // .where(or(...filters))
+        .groupBy(clubs.id, clubs.name)
+        .orderBy(clubs.name)
+        .limit(limit)
+        .offset(offset);
+
+      const clubEntityArr = res.map((c) => {
+        const {
+          campuses: campusesAgg,
+          areasOfInterest: areasOfInterestAgg,
+          ...rest
+        } = c;
+        const campusesArr = campusesAgg ? campusesAgg.split(",") : [];
+        const areasOfInterestArr = areasOfInterestAgg
+          ? areasOfInterestAgg.split(",")
+          : [];
+
+        return {
+          ...rest,
+          campuses: campusesArr,
+          areasOfInterest: areasOfInterestArr,
+        };
+      });
+
+      return clubEntityArr;
+    } catch (error) {
+      return new Error(`Something went wrong fetching Clubs: ${error}`);
+    }
+  }
+
+  /**
+   * Fetch a club by its UUID.
+   */
+  async findById(id: string): Promise<ClubRecord | undefined> {
+    const [row] = await this.db.select().from(clubs).where(eq(clubs.id, id));
+    return row;
+  }
+
+  /**
+   * Fetch a club by its externalId (id from SOP)
+   */
+  async findByExternalId(externalId: number): Promise<ClubRecord | undefined> {
+    const [row] = await this.db
+      .select()
+      .from(clubs)
+      .where(eq(clubs.externalId, externalId));
+    return row;
+  }
+
+  /**
+   * Fetch a club by its instagramUsername.
+   */
+  async findByInstagramUsername(
+    instagramUsername: string
+  ): Promise<ClubRecord | undefined> {
+    const [row] = await this.db
+      .select()
+      .from(clubs)
+      .where(eq(clubs.instagramUsername, instagramUsername));
+    return row;
+  }
+
+  /**
+   * Delete a club by its UUID and cascade-cleanup.
+   * (Assuming foreign keys with ON DELETE CASCADE handle related tables.)
+   */
+  //   async deleteById(id: string): Promise<void> {
+  //     await this.db.delete(clubs).where(eq(clubs.id, id));
+  //   }
+}

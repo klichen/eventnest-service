@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import cors from "cors";
 import "dotenv/config";
 import instagramTokenRoutes from "./routes/instagramTokenRoutes";
+import clubsRoutes from "./routes/clubsRoutes";
 import { requireApiKey } from "./middlewares/apiKeyAuth";
 
 const app = express();
@@ -27,9 +28,11 @@ app.use(express.json());
 app.use("/api/auth", instagramTokenRoutes);
 
 /* ─────────────  API-key guard  ───────────── */
-app.use(requireApiKey);
+// app.use(requireApiKey);
 
 /* ─────────────  PROTECTED routes  ───────────── */
+app.use("/api/clubs", clubsRoutes);
+// app.use("/api/events");
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

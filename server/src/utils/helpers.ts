@@ -67,3 +67,14 @@ export function parseESTIsoAsUtc(isoWithZ: string): Date {
   // 3) toJSDate() returns a JS Date (UTC‐based under the hood)
   return dt.toJSDate();
 }
+
+export interface PaginationArgs {
+  page?: number;
+  limit?: number;
+}
+
+export function calcOffset({ page = 1, limit = 20 }: PaginationArgs) {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  const safePage = Math.max(page, 1);
+  return { offset: (safePage - 1) * safeLimit, limit: safeLimit };
+}

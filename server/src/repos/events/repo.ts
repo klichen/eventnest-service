@@ -1,7 +1,7 @@
 // src/repos/EventsRepo.ts
 
-import { Postgres, type PgConnection } from "../db";
-import { events } from "../db/schema";
+import { Postgres, type PgConnection } from "../../db";
+import { events } from "../../db/schema";
 import { eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
 export type EventRecord = InferSelectModel<typeof events>;

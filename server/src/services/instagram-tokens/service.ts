@@ -1,6 +1,6 @@
 import { URLSearchParams } from "url";
 import { InstagramTokenRepo } from "../../repos/instagramTokenRepo";
-import { ClubRepo } from "../../repos/clubRepo";
+import { ClubsRepo } from "../../repos/clubs/repo";
 
 type ShortLivedResponse = {
   access_token: string;
@@ -20,7 +20,7 @@ interface RefreshResult {
 }
 
 const tokenRepo = new InstagramTokenRepo();
-const clubRepo = new ClubRepo();
+const clubRepo = new ClubsRepo();
 
 export async function handleTokenExchange(code: string) {
   // 1) Exchange code for a short‑lived token

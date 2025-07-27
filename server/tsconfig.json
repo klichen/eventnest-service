@@ -16,7 +16,8 @@
     "types": ["node"],
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
-    "incremental": true
+    "incremental": true,
+    "noErrorTruncation": true
   },
   "include": ["src/**/*.ts", "./drizzle.config.ts"],
   "exclude": ["node_modules", "dist"]

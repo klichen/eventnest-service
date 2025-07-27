@@ -6,7 +6,7 @@ import {
 } from "./openAIBatchHelper";
 import { InstagramPostRepo } from "../../repos/instagramPostsRepo";
 import { fieldIsEmptyOrNullish, processDatetimeString } from "./helpers";
-import { EventsRepo } from "../../repos/eventsRepo";
+import { EventsRepo } from "../../repos/events/repo";
 
 // TODO refactor this to use DI, initialize in one place and pass to necessary components
 // check how this will need to be done when setting on the cron jobs

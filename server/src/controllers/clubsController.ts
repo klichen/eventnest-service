@@ -2,7 +2,8 @@ import { type Request, type Response } from "express";
 import { ClubsService } from "../services/clubs/service";
 import { z } from "zod";
 import { HttpError } from "../utils/errors";
-import type { ClubsFilter } from "../services/clubs/types";
+import { findInvalid, normalize, splitCsv } from "../utils/helpers";
+import { ALLOWED_CAMPUS_KEYS, ALLOWED_INTEREST_KEYS } from "../utils/constants";
 
 const clubsQuery = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -20,33 +21,51 @@ export async function getAllClubs(req: Request, res: Response) {
     }
 
     const { campuses, interests, search } = q.data;
-    const filters: ClubsFilter = {
-      campusFilter: campuses
-        ? campuses
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [],
-      interestsFilter: interests
-        ? interests
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [],
-      searchFilter: search,
-    };
+
+    const campusKeys = normalize(splitCsv(campuses));
+    const interestKeys = normalize(splitCsv(interests));
+
+    const badCampuses = findInvalid(campusKeys, ALLOWED_CAMPUS_KEYS);
+    const badInterests = findInvalid(interestKeys, ALLOWED_INTEREST_KEYS);
+
+    // filter values validation
+    if (badCampuses.length || badInterests.length) {
+      let errMsg = "One or more filter values are invalid.";
+      if (badCampuses.length)
+        errMsg = errMsg.concat(
+          " ",
+          `Invalid campuses values: ${badCampuses.join(
+            ","
+          )} - refer to API doc for valid values`
+        );
+      if (badInterests.length)
+        errMsg = errMsg.concat(
+          " ",
+          `Invalid interests values: ${badInterests.join(
+            ","
+          )} - refer to API doc for valid values`
+        );
+      throw new HttpError(errMsg, 400);
+    }
 
     const clubsService = new ClubsService();
-    const result = await clubsService.listClubs({ page: 1, limit: 5, filters });
-    res.json(result);
+    const result = await clubsService.listClubs({
+      page: 1,
+      limit: 5,
+      filters: {
+        campusFilter: campusKeys,
+        interestsFilter: interestKeys,
+        searchFilter: search,
+      },
+    });
+    return res.json(result);
   } catch (err: unknown) {
     console.error("Error fetching clubs", err);
     if (err instanceof HttpError) {
       res
         .status(err.statusCode ?? 400)
         .json({ error: err.message ?? "Invalid Request" });
-    }
-    if (err instanceof Error) {
+    } else if (err instanceof Error) {
       res.status(500).json({ error: err.message ?? "Failed to fetch clubs" });
     }
   }

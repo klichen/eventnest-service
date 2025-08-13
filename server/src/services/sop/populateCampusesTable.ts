@@ -1,11 +1,6 @@
 import { Postgres } from "../../db";
 import { campuses } from "../../db/schema";
-
-const predefinedCampuses = [
-  { id: 24, key: "st-george", value: "St George" },
-  { id: 29, key: "utm", value: "UTM" },
-  { id: 34, key: "utsc", value: "UTSC" },
-];
+import { predefinedCampuses } from "../../utils/constants";
 
 // Function to populate the campuses table with predefined rows
 async function populateCampuses() {

@@ -78,3 +78,18 @@ export function calcOffset({ page = 1, limit = 20 }: PaginationArgs) {
   const safePage = Math.max(page, 1);
   return { offset: (safePage - 1) * safeLimit, limit: safeLimit };
 }
+
+export function splitCsv(v?: string): string[] {
+  return v
+    ? v
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+}
+export function normalize(keys: string[]): string[] {
+  return Array.from(new Set(keys.map((k) => k.toLowerCase())));
+}
+export function findInvalid(input: string[], allowed: Set<string>): string[] {
+  return input.filter((k) => !allowed.has(k));
+}

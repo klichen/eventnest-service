@@ -1,5 +1,3 @@
-// src/repositories/ClubRepo.ts
-
 import { Postgres, type PgConnection } from "../../db";
 import {
   clubs,
@@ -9,7 +7,7 @@ import {
   areasOfInterest,
   clubInstagramTokens,
 } from "../../db/schema";
-import { and, eq, or, SQL, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, or, SQL, sql } from "drizzle-orm";
 import type { ClubEntity } from "./entities";
 import type { ClubsFilter } from "../../services/clubs/types";
 
@@ -44,7 +42,43 @@ export class ClubsRepo {
   ): Promise<ClubEntity[] | Error> {
     try {
       const filters: SQL[] = [];
-      // TODO add filters
+
+      // filters
+      if (reqFilters.campusFilter?.length) {
+        filters.push(sql`
+          EXISTS (
+            SELECT 1
+            FROM ${clubsCampuses} cc2
+            JOIN ${campuses} cam2 ON cam2.id = cc2.campus_id
+            WHERE cc2.club_id = ${clubs.id}
+              AND ${inArray(sql.raw("cam2.key"), reqFilters.campusFilter)}
+          )
+        `);
+      }
+
+      if (reqFilters.interestsFilter?.length) {
+        filters.push(sql`
+          EXISTS (
+            SELECT 1
+            FROM ${clubAreasOfInterest} caoi2
+            JOIN ${areasOfInterest}     aoi2  ON aoi2.id = caoi2.interest_id
+            WHERE caoi2.club_id = ${clubs.id}
+              AND ${inArray(sql.raw("aoi2.key"), reqFilters.interestsFilter)}
+          )
+        `);
+      }
+
+      if (reqFilters.searchFilter) {
+        const searchQuery = `%${reqFilters.searchFilter.trim()}%`;
+        const searchFilter = or(
+          ilike(clubs.name, searchQuery),
+          ilike(clubs.description, searchQuery)
+        );
+        if (searchFilter) {
+          filters.push(searchFilter);
+        }
+      }
+
       const res = await this.db
         .select({
           id: clubs.id,
@@ -79,7 +113,7 @@ export class ClubsRepo {
           areasOfInterest,
           eq(areasOfInterest.id, clubAreasOfInterest.interestId)
         )
-        // .where(or(...filters))
+        .where(and(...filters))
         .groupBy(clubs.id, clubs.name)
         .orderBy(clubs.name)
         .limit(limit)

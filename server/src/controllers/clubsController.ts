@@ -20,7 +20,7 @@ export async function getAllClubs(req: Request, res: Response) {
       throw new HttpError(`Invalid query parameters: ${q.error}`, 400);
     }
 
-    const { campuses, interests, search } = q.data;
+    const { campuses, interests, search, page, limit } = q.data;
 
     const campusKeys = normalize(splitCsv(campuses));
     const interestKeys = normalize(splitCsv(interests));
@@ -50,15 +50,15 @@ export async function getAllClubs(req: Request, res: Response) {
 
     const clubsService = new ClubsService();
     const result = await clubsService.listClubs({
-      page: 1,
-      limit: 5,
+      page,
+      limit,
       filters: {
         campusFilter: campusKeys,
         interestsFilter: interestKeys,
         searchFilter: search,
       },
     });
-    return res.json(result);
+    res.json(result);
   } catch (err: unknown) {
     console.error("Error fetching clubs", err);
     if (err instanceof HttpError) {

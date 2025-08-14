@@ -35,50 +35,52 @@ export class ClubsRepo {
     this.db = pg.connection;
   }
 
+  private createFilters(f: ClubsFilter): SQL[] {
+    const filters: SQL[] = [];
+    if (f.campusFilter?.length) {
+      filters.push(sql`
+          EXISTS (
+            SELECT 1
+            FROM ${clubsCampuses} cc2
+            JOIN ${campuses} cam2 ON cam2.id = cc2.campus_id
+            WHERE cc2.club_id = ${clubs.id}
+              AND ${inArray(sql.raw("cam2.key"), f.campusFilter)}
+          )
+        `);
+    }
+
+    if (f.interestsFilter?.length) {
+      filters.push(sql`
+          EXISTS (
+            SELECT 1
+            FROM ${clubAreasOfInterest} caoi2
+            JOIN ${areasOfInterest}     aoi2  ON aoi2.id = caoi2.interest_id
+            WHERE caoi2.club_id = ${clubs.id}
+              AND ${inArray(sql.raw("aoi2.key"), f.interestsFilter)}
+          )
+        `);
+    }
+
+    if (f.searchFilter) {
+      const searchQuery = `%${f.searchFilter.trim()}%`;
+      const searchFilter = or(
+        ilike(clubs.name, searchQuery),
+        ilike(clubs.description, searchQuery)
+      );
+      if (searchFilter) {
+        filters.push(searchFilter);
+      }
+    }
+    return filters;
+  }
+
   async findClubs(
     offset: number,
     limit: number,
     reqFilters: ClubsFilter
   ): Promise<ClubEntity[] | Error> {
     try {
-      const filters: SQL[] = [];
-
-      // filters
-      if (reqFilters.campusFilter?.length) {
-        filters.push(sql`
-          EXISTS (
-            SELECT 1
-            FROM ${clubsCampuses} cc2
-            JOIN ${campuses} cam2 ON cam2.id = cc2.campus_id
-            WHERE cc2.club_id = ${clubs.id}
-              AND ${inArray(sql.raw("cam2.key"), reqFilters.campusFilter)}
-          )
-        `);
-      }
-
-      if (reqFilters.interestsFilter?.length) {
-        filters.push(sql`
-          EXISTS (
-            SELECT 1
-            FROM ${clubAreasOfInterest} caoi2
-            JOIN ${areasOfInterest}     aoi2  ON aoi2.id = caoi2.interest_id
-            WHERE caoi2.club_id = ${clubs.id}
-              AND ${inArray(sql.raw("aoi2.key"), reqFilters.interestsFilter)}
-          )
-        `);
-      }
-
-      if (reqFilters.searchFilter) {
-        const searchQuery = `%${reqFilters.searchFilter.trim()}%`;
-        const searchFilter = or(
-          ilike(clubs.name, searchQuery),
-          ilike(clubs.description, searchQuery)
-        );
-        if (searchFilter) {
-          filters.push(searchFilter);
-        }
-      }
-
+      const filters = this.createFilters(reqFilters);
       const res = await this.db
         .select({
           id: clubs.id,
@@ -115,7 +117,7 @@ export class ClubsRepo {
         )
         .where(and(...filters))
         .groupBy(clubs.id, clubs.name)
-        .orderBy(clubs.name)
+        .orderBy(clubs.name, clubs.id)
         .limit(limit)
         .offset(offset);
 
@@ -141,6 +143,18 @@ export class ClubsRepo {
     } catch (error) {
       return new Error(`Something went wrong fetching Clubs: ${error}`);
     }
+  }
+
+  async countClubs(reqFilters: ClubsFilter): Promise<number> {
+    const filters = this.createFilters(reqFilters);
+
+    const res = this.db
+      .select({ total: sql<number>`COUNT(*)` })
+      .from(clubs)
+      .where(and(...filters));
+
+    const [{ total }] = await res;
+    return Number(total);
   }
 
   /**

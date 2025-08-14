@@ -2,7 +2,7 @@ import type { ClubEntity } from "../../repos/clubs/entities";
 import { ClubsRepo } from "../../repos/clubs/repo";
 import { calcOffset } from "../../utils/helpers";
 import type { ClubDTO } from "./dto";
-import type { ClubsFilter } from "./types";
+import type { ClubsFilter, PaginatedResponse } from "./types";
 
 export class ClubsService {
   constructor(private repo = new ClubsRepo()) {}
@@ -26,23 +26,37 @@ export class ClubsService {
     };
   }
 
-  // TODO implement filters
   async listClubs(args: {
-    page?: number;
-    limit?: number;
+    page: number;
+    limit: number;
     filters: ClubsFilter;
-  }): Promise<ClubDTO[] | Error> {
+  }): Promise<PaginatedResponse | Error> {
     const { offset, limit } = calcOffset({
       page: args.page,
       limit: args.limit,
     });
-    console.log("LIMIT", limit);
-    const clubEntities = await this.repo.findClubs(offset, limit, args.filters);
+    // const clubEntities = await this.repo.findClubs(offset, limit, args.filters);
+    const [clubEntities, totalClubs] = await Promise.all([
+      this.repo.findClubs(offset, limit, args.filters),
+      this.repo.countClubs(args.filters),
+    ]);
     if (clubEntities instanceof Error) {
       throw clubEntities;
     }
-    const clubDTOs = clubEntities.map((e) => this.toDTO(e));
-    return clubDTOs;
+
+    const totalPages = Math.max(1, Math.ceil(totalClubs / limit));
+    const hasNext = args.page < totalPages;
+    const clubDTO = clubEntities.map((e) => this.toDTO(e));
+    return {
+      pagination: {
+        page: args.page,
+        limit,
+        totalPages,
+        totalClubs,
+        hasNext,
+      },
+      data: clubDTO,
+    };
   }
 
   async getClub(id: string) {

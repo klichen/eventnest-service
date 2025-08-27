@@ -4,6 +4,10 @@ import "dotenv/config";
 import instagramTokenRoutes from "./routes/instagramTokenRoutes";
 import clubsRoutes from "./routes/clubsRoutes";
 import { requireApiKey } from "./middlewares/apiKeyAuth";
+import swaggerUi from "swagger-ui-express";
+import { buildOpenAPIDocument } from "./utils/openapi/build";
+
+const openapiDoc = buildOpenAPIDocument();
 
 const app = express();
 
@@ -24,11 +28,17 @@ app.use(express.json());
 
 /* ─────────────  PUBLIC routes first  ───────────── */
 
+// API docs
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiDoc));
+app.get("/openapi.json", (_req, res) => {
+  res.json(openapiDoc);
+});
+
 // instagram token/authorization routes - club leaders will hit this endpoint to give us instagram permissions
 app.use("/api/auth", instagramTokenRoutes);
 
 /* ─────────────  API-key guard  ───────────── */
-// app.use(requireApiKey);
+app.use(requireApiKey);
 
 /* ─────────────  PROTECTED routes  ───────────── */
 app.use("/api/clubs", clubsRoutes);

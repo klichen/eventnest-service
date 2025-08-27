@@ -1,8 +1,8 @@
 import type { ClubEntity } from "../../repos/clubs/entities";
 import { ClubsRepo } from "../../repos/clubs/repo";
 import { calcOffset } from "../../utils/helpers";
-import type { ClubDTO } from "./dto";
-import type { ClubsFilter, PaginatedResponse } from "./types";
+import type { ClubDTO } from "./schemas";
+import type { ClubsFilter, PaginatedClubs } from "./schemas";
 
 export class ClubsService {
   constructor(private repo = new ClubsRepo()) {}
@@ -30,7 +30,7 @@ export class ClubsService {
     page: number;
     limit: number;
     filters: ClubsFilter;
-  }): Promise<PaginatedResponse | Error> {
+  }): Promise<PaginatedClubs | Error> {
     const { offset, limit } = calcOffset({
       page: args.page,
       limit: args.limit,

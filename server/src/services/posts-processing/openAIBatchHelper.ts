@@ -1,7 +1,7 @@
 import path from "path";
 import OpenAI from "openai";
 import type { Batch, FileObject } from "openai/resources/index";
-import { zodTextFormat } from "openai/helpers/zod";
+import { zodTextFormat } from "../../utils/openaiZodHelpers";
 import { z } from "zod";
 import fs from "fs";
 import os from "os";

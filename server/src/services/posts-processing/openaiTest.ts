@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { zodResponseFormat, zodTextFormat } from "openai/helpers/zod";
+import { zodTextFormat } from "../../utils/openaiZodHelpers";
 import { z } from "zod";
 import "dotenv/config";
 import {

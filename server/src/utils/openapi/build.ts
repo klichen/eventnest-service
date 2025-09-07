@@ -45,10 +45,10 @@ export function buildOpenAPIDocument() {
   registry.register("PaginatedClubs", PaginatedClubsSchema);
   registry.register("ErrorResponse", ErrorSchema);
 
-  // ---- Path: GET /api/v1/clubs ----
+  // ---- Path: GET /api/clubs ----
   registry.registerPath({
     method: "get",
-    path: "/api/v1/clubs",
+    path: "/api/clubs",
     tags: ["Clubs"],
     summary: "List clubs (paginated)",
     description:
@@ -78,11 +78,11 @@ export function buildOpenAPIDocument() {
         required: false,
         schema: {
           type: "array",
-          items: { enum: CAMPUS_KEYS as unknown as string[] },
+          items: { enum: CAMPUS_KEYS as unknown as string[], type: "string" },
         },
         style: "form",
         explode: false, // => comma-separated
-        example: "campuses=usc,utem", // Swagger UI will render as CSV in URL
+        example: ["st-george", "utsc"], // Swagger UI will render as CSV in URL
       },
       {
         in: "query",
@@ -91,11 +91,11 @@ export function buildOpenAPIDocument() {
         required: false,
         schema: {
           type: "array",
-          items: { enum: INTEREST_KEYS as unknown as string[] },
+          items: { enum: INTEREST_KEYS as unknown as string[], type: "string" },
         },
         style: "form",
         explode: false,
-        example: "interests=media,academic",
+        example: ["media", "academic"],
       },
       {
         in: "query",
@@ -174,7 +174,7 @@ export function buildOpenAPIDocument() {
     info: { title: "EventNest API", version: "1.0.0" },
     servers: [
       { url: "http://localhost:3001", description: "Local" },
-      { url: "https://api.example.com", description: "Production" },
+      { url: "https://api.example.com", description: "Production" }, // TODO update when deployed
     ],
   });
 }

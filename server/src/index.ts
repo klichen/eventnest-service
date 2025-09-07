@@ -29,7 +29,22 @@ app.use(express.json());
 /* ─────────────  PUBLIC routes first  ───────────── */
 
 // API docs
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiDoc));
+const options = {};
+
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(openapiDoc, {
+    explorer: false,
+    swaggerOptions: {
+      persistAuthorization: true, // optional
+      docExpansion: "list",
+    },
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "EventNest API",
+  })
+);
+
 app.get("/openapi.json", (_req, res) => {
   res.json(openapiDoc);
 });

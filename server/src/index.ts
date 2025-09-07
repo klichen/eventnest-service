@@ -31,8 +31,6 @@ app.use(limiter);
 /* ─────────────  PUBLIC routes first  ───────────── */
 
 // API docs
-const options = {};
-
 app.use(
   "/docs",
   swaggerUi.serve,

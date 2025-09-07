@@ -9,7 +9,7 @@ import {
 } from "../../db/schema";
 import { and, eq, ilike, inArray, or, SQL, sql } from "drizzle-orm";
 import type { ClubEntity } from "./entities";
-import type { ClubsFilter } from "../../services/clubs/types";
+import type { ClubsFilter } from "../../services/clubs/schemas";
 
 export interface ClubRecord {
   id: string;

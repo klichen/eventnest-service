@@ -29,18 +29,17 @@ export async function fetchAndValidateSOPData(): Promise<Club[]> {
  * Each club's upsert occurs in its own transaction.
  */
 // TODO - CRON JOB > weekly on Sundays at 3am
-export async function syncSOPClubs(isDev = false) {
-  const db = new Postgres();
+export async function syncSOPClubs(db: PgConnection, isDev = false) {
+  // const db = new Postgres();
   return tryCatch(async () => {
     const sopClubs = await fetchAndValidateSOPData();
-    const clubsToUpsert = isDev ? sopClubs.slice(0, 10) : sopClubs;
+    const clubsToUpsert = isDev ? sopClubs.slice(0, 25) : sopClubs;
     for (const sopClub of clubsToUpsert) {
-      await upsertSingleClub(sopClub, db.connection);
+      await upsertSingleClub(sopClub, db);
     }
     console.log(
       `Successfully upserted ${clubsToUpsert.length} clubs from SOP data.`
     );
-    db.close();
   });
 }
 
@@ -48,7 +47,7 @@ export async function syncSOPClubs(isDev = false) {
  * Upsert a single club and its relationships within its own transaction.
  * Uses onConflictDoUpdate for upserts and onConflictDoNothing for the composite tables.
  */
-async function upsertSingleClub(sopClub: Club, db: PgConnection) {
+export async function upsertSingleClub(sopClub: Club, db: PgConnection) {
   await db.transaction(async (tx) => {
     // Prepare club data.
     const instagramUrl = sopClub.social_Media?.instagram;

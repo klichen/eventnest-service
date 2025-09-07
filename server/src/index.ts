@@ -6,6 +6,7 @@ import clubsRoutes from "./routes/clubsRoutes";
 import { requireApiKey } from "./middlewares/apiKeyAuth";
 import swaggerUi from "swagger-ui-express";
 import { buildOpenAPIDocument } from "./utils/openapi/build";
+import { limiter } from "./utils/rateLimit";
 
 const openapiDoc = buildOpenAPIDocument();
 
@@ -25,6 +26,7 @@ const corsOptions = {
 /* ─────────────  generic middleware  ───────────── */
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(limiter);
 
 /* ─────────────  PUBLIC routes first  ───────────── */
 

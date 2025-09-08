@@ -8,6 +8,7 @@ import {
   PaginatedClubsSchema,
   ErrorSchema,
 } from "../../services/clubs/schemas";
+import "dotenv/config";
 
 // if you expose fixed filter keys, enumerate them here for docs:
 const CAMPUS_KEYS = ["st-george", "utm", "utsc"] as const;
@@ -173,8 +174,11 @@ export function buildOpenAPIDocument() {
     openapi: "3.1.0",
     info: { title: "EventNest API", version: "1.0.0" },
     servers: [
-      { url: "http://localhost:3001", description: "Local" },
-      { url: "https://api.example.com", description: "Production" }, // TODO update when deployed
+      {
+        url: process.env.HOST_URL ?? "https://api.example.com",
+        description: "Testing",
+      },
+      { url: "http://localhost:8080", description: "Local" },
     ],
   });
 }

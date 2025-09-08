@@ -16,6 +16,7 @@ const corsOptions = {
   origin: [
     process.env.CLIENT_BASE_URL || "https://localhost:3000",
     "https://www.getpostman.com",
+    "https://localhost:8080",
   ], // Allow requests only from these origins
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true, // Allow cookies, if your application uses them

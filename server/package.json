@@ -7,8 +7,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch ./src/index.ts",
-    "build": "tsc --build",
-    "start": "node ./dist/index.js",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.cjs --external:swagger-ui-express",
+    "typecheck": "tsc --noEmit",
+    "start": "node ./dist/index.cjs",
     "db:migrate": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "populateBase": "tsx ./src/services/sop/populateAreasOfInterestTable.ts && tsx ./src/services/sop/populateCampusesTable.ts && tsx ./src/services/sop/populateClubs.ts",
@@ -41,6 +42,7 @@
     "@types/pg": "^8.11.12",
     "@types/swagger-ui-express": "^4.1.8",
     "drizzle-kit": "^0.30.5",
+    "esbuild": "^0.25.9",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }

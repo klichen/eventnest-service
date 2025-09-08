@@ -23,6 +23,9 @@ const corsOptions = {
   // headers: 'Content-Type, Authorization, Content-Length, X-Requested-With',
 };
 
+// work with ngrok
+app.set("trust proxy", 1);
+
 /* ─────────────  generic middleware  ───────────── */
 app.use(cors(corsOptions));
 app.use(express.json());

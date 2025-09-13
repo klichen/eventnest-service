@@ -45,6 +45,11 @@ export default function AuthorizationPage() {
         return exchangeResponse;
       } catch (err) {
         console.error(err);
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Internal server error');
+        }
       } finally {
         setLoading(false);
       }

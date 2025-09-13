@@ -28,7 +28,7 @@ export async function handleTokenExchange(code: string) {
   // console.log("short access token:", short.access_token);
 
   const instagramUsername = await fetchInstagramUsername(short.access_token);
-  console.log("ig username:", instagramUsername);
+  console.log(`validating ${instagramUsername}`);
 
   // 2) check whether this club exists in our db (registered with SOP)
   const clubId = await validateAccount(instagramUsername);
@@ -51,7 +51,7 @@ export async function handleTokenExchange(code: string) {
   );
 
   console.log(
-    `Successfully acquired token for club ${clubId} (${instagramUsername})`
+    `Successfully acquired long-lived token for club ${clubId} (${instagramUsername})`
   );
 
   return {

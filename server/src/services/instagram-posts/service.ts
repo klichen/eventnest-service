@@ -15,6 +15,7 @@ const postRepo = new InstagramPostRepo();
  * Fetch all posts for each club’s Instagram token, then save to DB.
  */
 // TODO - CRON JOB
+// TODO look more closely into instagram api rate limits - 200 per hour per user? -- solution: rolling post discovery?
 export async function fetchAndSaveAllInstagramPosts(): Promise<void> {
   // 1) Get every club’s current Instagram token record
   const tokens: ClubInstagramTokenRecord[] = await tokenRepo.getAllTokens();
@@ -73,7 +74,7 @@ async function fetchInstagramPostIdsForToken(
   const url = new URL("https://graph.instagram.com/v22.0/me/media");
   url.searchParams.set("access_token", token);
   // Only fetch posts from the last 24 hours
-  const sinceTimestamp = hoursAgoToUnix(24);
+  const sinceTimestamp = hoursAgoToUnix(6200);
   url.searchParams.set("since", sinceTimestamp.toString());
 
   const res = await fetch(url.toString());

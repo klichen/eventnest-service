@@ -123,8 +123,11 @@ export class OpenAIBatchHelper {
                 role: "user",
                 content: [
                   { type: "input_text", text: `Post caption: ${post.caption}` },
-                  { type: "input_image", image_url: post.mediaUrl },
-                ],
+                  post.mediaUrl && {
+                    type: "input_image",
+                    image_url: post.mediaUrl,
+                  },
+                ].filter(Boolean),
               },
             ],
             text: {

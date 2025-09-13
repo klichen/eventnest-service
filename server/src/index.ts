@@ -14,9 +14,10 @@ const app = express();
 
 const corsOptions = {
   origin: [
-    process.env.CLIENT_BASE_URL || "https://localhost:3000",
+    "https://localhost:3000",
     "https://www.getpostman.com",
     "https://localhost:8080",
+    process.env.CLIENT_BASE_URL || "",
   ], // Allow requests only from these origins
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true, // Allow cookies, if your application uses them
@@ -33,6 +34,9 @@ app.use(express.json());
 app.use(limiter);
 
 /* ─────────────  PUBLIC routes first  ───────────── */
+
+// instagram token/authorization routes - club leaders will hit this endpoint to give us instagram permissions
+app.use("/api/auth", instagramTokenRoutes);
 
 // API docs
 app.use(
@@ -52,9 +56,6 @@ app.use(
 app.get("/openapi.json", (_req, res) => {
   res.json(openapiDoc);
 });
-
-// instagram token/authorization routes - club leaders will hit this endpoint to give us instagram permissions
-app.use("/api/auth", instagramTokenRoutes);
 
 /* ─────────────  API-key guard  ───────────── */
 app.use(requireApiKey);

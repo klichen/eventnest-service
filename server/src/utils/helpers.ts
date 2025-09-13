@@ -28,18 +28,61 @@ export function hoursAgoToUnix(hours: number): number {
 export async function resolveInstagramMediaUrl(
   mediaUrl: string
 ): Promise<string> {
-  // Use HEAD so you don’t download the whole image
-  const res = await fetch(mediaUrl, {
-    method: "GET",
-    redirect: "follow", // (default) follow 302 → CDN
-  });
+  const attempts = 3; // total tries
+  const timeoutMs = 3000; // per attempt
+  const baseDelayMs = 300;
 
-  if (!res.ok) {
-    throw new Error(`Failed to resolve media URL (${res.status})`);
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  for (let i = 1; i <= attempts; i++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      console.log(`attempting to resolve url for ${mediaUrl}`);
+      const res = await fetch(mediaUrl, {
+        method: "GET",
+        redirect: "follow",
+        signal: controller.signal,
+      });
+      if (res.ok) {
+        console.log(`resolved ${mediaUrl}`);
+        return res.url;
+      }
+
+      const retryable =
+        res.status === 408 ||
+        res.status === 429 ||
+        (res.status >= 500 && res.status < 600);
+
+      if (!retryable || i === attempts) {
+        console.error(`Failed to resolve media URL (${res.status})`);
+        return "";
+      }
+    } catch (err: any) {
+      // Network/timeout errors are retryable unless we're out of attempts
+      if (i === attempts) {
+        console.error(
+          `Failed to resolve media URL after ${i} attempt(s): ${
+            err?.message ?? err
+          }`
+        );
+        return "";
+      }
+    } finally {
+      clearTimeout(timer);
+    }
+
+    // Exponential backoff with small jitter
+    const delay =
+      Math.min(5000, baseDelayMs * 2 ** (i - 1)) +
+      Math.floor(Math.random() * 100);
+    await sleep(delay);
   }
 
-  // `res.url` is the final URL after following all redirects
-  return res.url;
+  // should be unreachable: loop either returned or threw
+  console.error("Unexpected fallthrough in resolveInstagramMediaUrl");
+  return "";
 }
 
 /**

@@ -6,8 +6,12 @@ import {
 import {
   ClubDTOSchema,
   PaginatedClubsSchema,
-  ErrorSchema,
 } from "../../services/clubs/schemas";
+import {
+  EventDTOSchema,
+  PaginatedEventsSchema,
+} from "../../services/events/schemas";
+import { ErrorSchema } from "../sharedSchemas";
 import "dotenv/config";
 
 // if you expose fixed filter keys, enumerate them here for docs:
@@ -44,6 +48,8 @@ export function buildOpenAPIDocument() {
   // ---- Schemas (components.schemas) ----
   registry.register("Club", ClubDTOSchema);
   registry.register("PaginatedClubs", PaginatedClubsSchema);
+  registry.register("Event", EventDTOSchema);
+  registry.register("PaginatedEvents", PaginatedEventsSchema);
   registry.register("ErrorResponse", ErrorSchema);
 
   // ---- Path: GET /api/clubs ----

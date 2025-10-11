@@ -20,9 +20,28 @@ export function createMediaUrl(url: string): string {
   return `${trimmed}/media`;
 }
 
+// --- Date time helpers ---
 export function hoursAgoToUnix(hours: number): number {
   const msAgo = hours * 60 * 60 * 1000;
   return Math.floor((Date.now() - msAgo) / 1000);
+}
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+/** Parse a YYYY-MM-DD into a UTC Date at 00:00:00Z. Returns null if invalid. */
+export function parseDateOnly(dateStr?: string | null): Date | null {
+  if (!dateStr) return null;
+  if (!DATE_RE.test(dateStr)) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  // Ensure it's a real calendar date (no overflow like 2025-02-31 -> Mar 3)
+  if (
+    dt.getUTCFullYear() !== y ||
+    dt.getUTCMonth() !== m - 1 ||
+    dt.getUTCDate() !== d
+  ) {
+    return null;
+  }
+  return dt;
 }
 
 export async function resolveInstagramMediaUrl(
@@ -130,9 +149,11 @@ export function splitCsv(v?: string): string[] {
         .filter(Boolean)
     : [];
 }
+
 export function normalize(keys: string[]): string[] {
   return Array.from(new Set(keys.map((k) => k.toLowerCase())));
 }
+
 export function findInvalid(input: string[], allowed: Set<string>): string[] {
   return input.filter((k) => !allowed.has(k));
 }

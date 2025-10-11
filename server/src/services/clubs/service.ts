@@ -52,7 +52,7 @@ export class ClubsService {
         page: args.page,
         limit,
         totalPages,
-        totalClubs,
+        totalItems: totalClubs,
         hasNext,
       },
       data: clubDTO,

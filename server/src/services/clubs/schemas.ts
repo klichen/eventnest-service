@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { makePaginatedSchema, type Paginated } from "../../utils/sharedSchemas";
 
 extendZodWithOpenApi(z);
 
@@ -25,35 +26,12 @@ export const ClubDTOSchema = z
 
 export type ClubDTO = z.infer<typeof ClubDTOSchema>;
 
-export const PageMetaSchema = z
-  .object({
-    page: z.int(),
-    limit: z.int(),
-    totalClubs: z.int(),
-    totalPages: z.int(),
-    hasNext: z.boolean(),
-  })
-  .openapi("PageMeta");
+export const PaginatedClubsSchema = makePaginatedSchema(
+  ClubDTOSchema,
+  "PaginatedClubs"
+);
 
-type PageMeta = z.infer<typeof PageMetaSchema>;
-
-export const PaginatedClubsSchema = z
-  .object({
-    pagination: PageMetaSchema,
-    data: z.array(ClubDTOSchema),
-  })
-  .openapi("PaginatedClubs");
-
-export type PaginatedClubs = {
-  pagination: PageMeta;
-  data: ClubDTO[];
-};
-
-export const ErrorSchema = z
-  .object({
-    error: z.string(),
-  })
-  .openapi("ErrorResponse");
+export type PaginatedClubs = Paginated<ClubDTO>;
 
 export type ClubsFilter = {
   campusFilter: string[];

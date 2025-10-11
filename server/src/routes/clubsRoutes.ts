@@ -6,7 +6,4 @@ const router = Router();
 // GET /api/clubs
 router.get("/", getAllClubs);
 
-// (optional) for triggering a manual refresh
-// router.post("/refresh-tokens", refreshTokens);
-
 export default router;

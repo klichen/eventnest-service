@@ -3,6 +3,7 @@ import cors from "cors";
 import "dotenv/config";
 import instagramTokenRoutes from "./routes/instagramTokenRoutes";
 import clubsRoutes from "./routes/clubsRoutes";
+import eventsRoutes from "./routes/eventsRoutes";
 import { requireApiKey } from "./middlewares/apiKeyAuth";
 import swaggerUi from "swagger-ui-express";
 import { buildOpenAPIDocument } from "./utils/openapi/build";
@@ -62,7 +63,7 @@ app.use(requireApiKey);
 
 /* ─────────────  PROTECTED routes  ───────────── */
 app.use("/api/clubs", clubsRoutes);
-// app.use("/api/events");
+app.use("/api/events", eventsRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

@@ -1,5 +1,7 @@
 import { DateTime } from "luxon";
 
+const ZONE = "America/Toronto";
+
 export function extractInstagramUsername(url: string) {
   // Matches the Instagram URL, captures the username, and then ignores the rest.
   const regex =
@@ -42,6 +44,33 @@ export function parseDateOnly(dateStr?: string | null): Date | null {
     return null;
   }
   return dt;
+}
+
+/** Start of day in UTC: 00:00:00.000Z */
+export function startOfDayUTC(d: Date): Date {
+  const t = new Date(d.getTime());
+  t.setUTCHours(0, 0, 0, 0);
+  return t;
+}
+
+/** End of day in UTC: 23:59:59.999Z */
+export function endOfDayUTC(d: Date): Date {
+  const t = new Date(d.getTime());
+  t.setUTCHours(23, 59, 59, 999);
+  return t;
+}
+
+/** Inclusive end of the current week (Sunday 23:59:59.999 UTC), given any Date. */
+export function endOfCurrentWeekUTC(d: Date): Date {
+  // 0 = Sunday, 1 = Monday, ... 6 = Saturday (UTC)
+  const day = d.getUTCDay();
+  const daysUntilSunday = (7 - day) % 7; // if Sunday, this is 0
+  const base = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0)
+  );
+  base.setUTCDate(base.getUTCDate() + daysUntilSunday);
+  base.setUTCHours(23, 59, 59, 999);
+  return base;
 }
 
 export async function resolveInstagramMediaUrl(
@@ -120,8 +149,8 @@ export function parseESTIsoAsUtc(isoWithZ: string): Date {
   // 1) Drop the Z so we don’t treat it as UTC
   const bareIso = isoWithZ.replace(/Z$/, "");
 
-  // 2) Parse in America/New_York (handles EST vs. EDT automatically)
-  const dt = DateTime.fromISO(bareIso, { zone: "America/Toronto" });
+  // 2) Parse in America/Toronto (handles EST vs. EDT automatically)
+  const dt = DateTime.fromISO(bareIso, { zone: ZONE });
   if (!dt.isValid) {
     throw new Error(`Invalid ISO date: ${isoWithZ}`);
   }

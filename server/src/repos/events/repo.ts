@@ -14,7 +14,8 @@ import {
   eq,
   gte,
   ilike,
-  lt,
+  inArray,
+  lte,
   or,
   SQL,
   sql,
@@ -155,7 +156,7 @@ export class EventsRepo {
       filters.push(gte(events.startDatetime, f.rangeStart));
     }
     if (f.rangeEnd) {
-      filters.push(lt(events.startDatetime, f.rangeEnd));
+      filters.push(lte(events.startDatetime, f.rangeEnd));
     }
 
     // Campus filter (filter by campus KEYs via EXISTS against the owning club)
@@ -163,10 +164,10 @@ export class EventsRepo {
       filters.push(sql`
       EXISTS (
         SELECT 1
-        FROM ${clubsCampuses} cc
-        JOIN ${campuses} c ON c.id = cc.campus_id
-        WHERE cc.club_id = ${clubs.id}
-          AND c.key = ANY(${f.campusFilter}::text[])
+        FROM ${clubsCampuses} cc2
+        JOIN ${campuses} cam2 ON cam2.id = cc2.campus_id
+        WHERE cc2.club_id = ${clubs.id}
+          AND ${inArray(sql.raw("cam2.key"), f.campusFilter)}
       )
     `);
     }
@@ -176,10 +177,10 @@ export class EventsRepo {
       filters.push(sql`
       EXISTS (
         SELECT 1
-        FROM ${clubAreasOfInterest} cai
-        JOIN ${areasOfInterest} ai ON ai.id = cai.interest_id
-        WHERE cai.club_id = ${clubs.id}
-          AND ai.key = ANY(${f.interestsFilter}::text[])
+        FROM ${clubAreasOfInterest} caoi2
+        JOIN ${areasOfInterest}     aoi2  ON aoi2.id = caoi2.interest_id
+        WHERE caoi2.club_id = ${clubs.id}
+          AND ${inArray(sql.raw("aoi2.key"), f.interestsFilter)}
       )
     `);
     }

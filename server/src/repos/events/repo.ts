@@ -49,11 +49,11 @@ export class EventsRepo {
           id: events.id,
           clubId: instagramPosts.clubId,
           title: events.title,
-          description: events.description,
           location: events.location,
           incentives: events.incentives,
           startDatetime: events.startDatetime,
           endDatetime: events.endDatetime,
+          imageUrl: instagramPosts.imageUrl,
           // Aggregate human-friendly campus VALUES for display
           campuses: sql<string | null>`
           STRING_AGG(DISTINCT ${campuses.value}, ',')
@@ -73,7 +73,7 @@ export class EventsRepo {
           eq(areasOfInterest.id, clubAreasOfInterest.interestId)
         )
         .where(and(...filters))
-        .groupBy(events.id, instagramPosts.clubId)
+        .groupBy(events.id, instagramPosts.clubId, instagramPosts.imageUrl)
         .orderBy(events.startDatetime, events.id)
         .limit(limit)
         .offset(offset);

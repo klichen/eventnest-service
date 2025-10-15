@@ -9,15 +9,15 @@ export const EventDTOSchema = z
   .object({
     id: z.uuid(),
     clubId: z.uuid(),
+    imageUrl: z.string(),
     title: z.string(),
-    description: z.string().nullable(),
     location: z.string(),
     startDatetime: z.date(),
     endDatetime: z.date().nullable(),
     incentives: z.string().nullable(),
     campuses: z.array(z.string()).nullable(),
   })
-  .openapi("Club");
+  .openapi("Event");
 
 export type EventDTO = z.infer<typeof EventDTOSchema>;
 

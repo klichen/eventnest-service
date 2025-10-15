@@ -10,8 +10,8 @@ export class EventsService {
     return {
       id: e.id,
       clubId: e.clubId,
+      imageUrl: e.imageUrl,
       title: e.title,
-      description: e.description,
       location: e.location,
       startDatetime: e.startDatetime,
       endDatetime: e.endDatetime,

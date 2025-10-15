@@ -1,8 +1,8 @@
 export interface EventEntity {
   id: string;
   clubId: string;
+  imageUrl: string;
   title: string;
-  description: string | null;
   location: string;
   incentives: string | null;
   startDatetime: Date;

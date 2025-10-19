@@ -1,5 +1,13 @@
+export interface ClubSummaryEntity {
+  id: string;
+  name: string;
+  description: string | null;
+  campuses: string[];
+  areasOfInterest: string[];
+  connectedToEventNest: boolean;
+}
+
 export interface ClubEntity {
-  /* from clubs table */
   id: string;
   name: string;
   description: string | null;

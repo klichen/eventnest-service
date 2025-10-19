@@ -8,7 +8,7 @@ import {
   clubInstagramTokens,
 } from "../../db/schema";
 import { and, eq, ilike, inArray, or, SQL, sql } from "drizzle-orm";
-import type { ClubEntity } from "./entities";
+import type { ClubEntity, ClubSummaryEntity } from "./entities";
 import type { ClubsFilter } from "../../services/clubs/schemas";
 
 export interface ClubRecord {
@@ -78,9 +78,83 @@ export class ClubsRepo {
     offset: number,
     limit: number,
     reqFilters: ClubsFilter
-  ): Promise<ClubEntity[] | Error> {
+  ): Promise<ClubSummaryEntity[] | Error> {
     try {
       const filters = this.createFilters(reqFilters);
+      const res = await this.db
+        .select({
+          id: clubs.id,
+          name: clubs.name,
+          description: clubs.description,
+          campuses: sql<string | null>`
+        STRING_AGG(DISTINCT ${campuses.value}, ',')
+        `.as("campuses"),
+          areasOfInterest: sql<string | null>`
+        STRING_AGG(DISTINCT ${areasOfInterest.value}, ',')
+        `.as("areas_of_interest"),
+          connectedToEventNest: sql<boolean>`
+        EXISTS (
+          SELECT 1
+          FROM ${clubInstagramTokens} AS cit
+          WHERE cit.club_id = ${clubs.id}
+        )
+        `.as("connected_to_event_nest"),
+        })
+        .from(clubs)
+        .leftJoin(clubsCampuses, eq(clubsCampuses.clubId, clubs.id))
+        .leftJoin(campuses, eq(campuses.id, clubsCampuses.campusId))
+        .leftJoin(clubAreasOfInterest, eq(clubAreasOfInterest.clubId, clubs.id))
+        .leftJoin(
+          areasOfInterest,
+          eq(areasOfInterest.id, clubAreasOfInterest.interestId)
+        )
+        .where(and(...filters))
+        .groupBy(clubs.id, clubs.name)
+        .orderBy(clubs.name, clubs.id)
+        .limit(limit)
+        .offset(offset);
+
+      const clubSummaryArray: ClubSummaryEntity[] = res.map((c) => {
+        const {
+          campuses: campusesAgg,
+          areasOfInterest: areasOfInterestAgg,
+          ...rest
+        } = c;
+        const campusesArr = campusesAgg ? campusesAgg.split(",") : [];
+        const areasOfInterestArr = areasOfInterestAgg
+          ? areasOfInterestAgg.split(",")
+          : [];
+
+        return {
+          ...rest,
+          campuses: campusesArr,
+          areasOfInterest: areasOfInterestArr,
+        };
+      });
+
+      return clubSummaryArray;
+    } catch (error) {
+      return new Error(`Something went wrong fetching Clubs: ${error}`);
+    }
+  }
+
+  async countClubs(reqFilters: ClubsFilter): Promise<number> {
+    const filters = this.createFilters(reqFilters);
+
+    const res = this.db
+      .select({ total: sql<number>`COUNT(*)` })
+      .from(clubs)
+      .where(and(...filters));
+
+    const [{ total }] = await res;
+    return Number(total);
+  }
+
+  /**
+   * Fetch a club by its UUID.
+   */
+  async findById(id: string): Promise<ClubEntity | undefined | Error> {
+    try {
       const res = await this.db
         .select({
           id: clubs.id,
@@ -115,66 +189,42 @@ export class ClubsRepo {
           areasOfInterest,
           eq(areasOfInterest.id, clubAreasOfInterest.interestId)
         )
-        .where(and(...filters))
-        .groupBy(clubs.id, clubs.name)
-        .orderBy(clubs.name, clubs.id)
-        .limit(limit)
-        .offset(offset);
+        .where(eq(clubs.id, id))
+        .groupBy(clubs.id, clubs.name);
 
-      const clubEntityArr = res.map((c) => {
-        const {
-          campuses: campusesAgg,
-          areasOfInterest: areasOfInterestAgg,
-          ...rest
-        } = c;
-        const campusesArr = campusesAgg ? campusesAgg.split(",") : [];
-        const areasOfInterestArr = areasOfInterestAgg
-          ? areasOfInterestAgg.split(",")
-          : [];
+      if (res.length === 0) return undefined;
 
-        return {
-          ...rest,
-          campuses: campusesArr,
-          areasOfInterest: areasOfInterestArr,
-        };
-      });
+      const {
+        campuses: campusesAgg,
+        areasOfInterest: areasOfInterestAgg,
+        ...rest
+      } = res[0];
 
-      return clubEntityArr;
+      const campusesArr = campusesAgg ? campusesAgg.split(",") : [];
+      const areasOfInterestArr = areasOfInterestAgg
+        ? areasOfInterestAgg.split(",")
+        : [];
+
+      return {
+        ...rest,
+        campuses: campusesArr,
+        areasOfInterest: areasOfInterestArr,
+      };
     } catch (error) {
-      return new Error(`Something went wrong fetching Clubs: ${error}`);
+      return new Error(`Something went wrong fetching Event ${id}: ${error}`);
     }
   }
 
-  async countClubs(reqFilters: ClubsFilter): Promise<number> {
-    const filters = this.createFilters(reqFilters);
-
-    const res = this.db
-      .select({ total: sql<number>`COUNT(*)` })
-      .from(clubs)
-      .where(and(...filters));
-
-    const [{ total }] = await res;
-    return Number(total);
-  }
-
-  /**
-   * Fetch a club by its UUID.
-   */
-  async findById(id: string): Promise<ClubRecord | undefined> {
-    const [row] = await this.db.select().from(clubs).where(eq(clubs.id, id));
-    return row;
-  }
-
-  /**
-   * Fetch a club by its externalId (id from SOP)
-   */
-  async findByExternalId(externalId: number): Promise<ClubRecord | undefined> {
-    const [row] = await this.db
-      .select()
-      .from(clubs)
-      .where(eq(clubs.externalId, externalId));
-    return row;
-  }
+  // /**
+  //  * Fetch a club by its externalId (id from SOP)
+  //  */
+  // async findByExternalId(externalId: number): Promise<ClubRecord | undefined> {
+  //   const [row] = await this.db
+  //     .select()
+  //     .from(clubs)
+  //     .where(eq(clubs.externalId, externalId));
+  //   return row;
+  // }
 
   /**
    * Fetch a club by its instagramUsername.

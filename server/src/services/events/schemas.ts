@@ -4,8 +4,8 @@ import { makePaginatedSchema, type Paginated } from "../../utils/sharedSchemas";
 
 extendZodWithOpenApi(z);
 
-// DTO
-export const EventDTOSchema = z
+// List view
+export const EventSummarySchema = z
   .object({
     id: z.uuid(),
     clubId: z.uuid(),
@@ -17,16 +17,35 @@ export const EventDTOSchema = z
     incentives: z.string().nullable(),
     campuses: z.array(z.string()).nullable(),
   })
-  .openapi("Event");
+  .openapi("EventSummary");
 
-export type EventDTO = z.infer<typeof EventDTOSchema>;
+export type EventSummaryDTO = z.infer<typeof EventSummarySchema>;
 
 export const PaginatedEventsSchema = makePaginatedSchema(
-  EventDTOSchema,
+  EventSummarySchema,
   "PaginatedEvents"
 );
 
-export type PaginatedEvents = Paginated<EventDTO>;
+export type PaginatedEvents = Paginated<EventSummaryDTO>;
+
+/** Detail view (for GET /api/events/:id) */
+export const EventDetailSchema = z
+  .object({
+    id: z.uuid(),
+    clubId: z.uuid(),
+    imageUrl: z.string(),
+    title: z.string(),
+    description: z.string().nullable(),
+    location: z.string(),
+    startDatetime: z.date(),
+    endDatetime: z.date().nullable(),
+    incentives: z.string().nullable(),
+    campuses: z.array(z.string()).nullable(),
+    postUrl: z.string(),
+  })
+  .openapi("Event");
+
+export type EventDetailDTO = z.infer<typeof EventDetailSchema>;
 
 export type EventsFilters = {
   campusFilter: string[];

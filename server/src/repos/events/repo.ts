@@ -49,11 +49,13 @@ export class EventsRepo {
           id: events.id,
           clubId: instagramPosts.clubId,
           title: events.title,
+          description: events.description,
           location: events.location,
           incentives: events.incentives,
           startDatetime: events.startDatetime,
           endDatetime: events.endDatetime,
           imageUrl: instagramPosts.imageUrl,
+          postUrl: instagramPosts.postUrl,
           // Aggregate human-friendly campus VALUES for display
           campuses: sql<string | null>`
           STRING_AGG(DISTINCT ${campuses.value}, ',')
@@ -112,8 +114,56 @@ export class EventsRepo {
   /**
    * Fetch events tied to a specific Instagram post.
    */
-  async findByPostId(postId: string): Promise<EventRecord[]> {
-    return await this.db.select().from(events).where(eq(events.postId, postId));
+  async findById(id: string): Promise<EventEntity | undefined | Error> {
+    try {
+      const res = await this.db
+        .select({
+          id: events.id,
+          clubId: instagramPosts.clubId,
+          title: events.title,
+          description: events.description,
+          location: events.location,
+          incentives: events.incentives,
+          startDatetime: events.startDatetime,
+          endDatetime: events.endDatetime,
+          imageUrl: instagramPosts.imageUrl,
+          postUrl: instagramPosts.postUrl,
+          // Aggregate human-friendly campus VALUES for display
+          campuses: sql<string | null>`
+          STRING_AGG(DISTINCT ${campuses.value}, ',')
+        `.as("campuses"),
+        })
+        .from(events)
+        // Event -> Post -> Club
+        .innerJoin(instagramPosts, eq(instagramPosts.id, events.postId))
+        .innerJoin(clubs, eq(clubs.id, instagramPosts.clubId))
+        // Joins for campus aggregation
+        .leftJoin(clubsCampuses, eq(clubsCampuses.clubId, clubs.id))
+        .leftJoin(campuses, eq(campuses.id, clubsCampuses.campusId))
+        // Joins for interest filtering/visibility (aggregation not required for EventEntity)
+        .leftJoin(clubAreasOfInterest, eq(clubAreasOfInterest.clubId, clubs.id))
+        .leftJoin(
+          areasOfInterest,
+          eq(areasOfInterest.id, clubAreasOfInterest.interestId)
+        )
+        .where(eq(events.id, id))
+        .groupBy(
+          events.id,
+          instagramPosts.clubId,
+          instagramPosts.imageUrl,
+          instagramPosts.postUrl
+        );
+
+      if (res.length === 0) return undefined;
+      const { campuses: campusesAgg, ...rest } = res[0];
+      const campusesArr = campusesAgg ? campusesAgg.split(",") : [];
+      return {
+        ...rest,
+        campuses: campusesArr,
+      };
+    } catch (error) {
+      return new Error(`Something went wrong fetching Events: ${error}`);
+    }
   }
 
   /**

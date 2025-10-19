@@ -3,11 +3,11 @@ import {
   OpenApiGeneratorV31,
 } from "@asteasolutions/zod-to-openapi";
 import {
-  ClubDTOSchema,
+  ClubSummarySchema,
   PaginatedClubsSchema,
 } from "../../services/clubs/schemas";
 import {
-  EventDTOSchema,
+  EventSummarySchema,
   PaginatedEventsSchema,
 } from "../../services/events/schemas";
 import { ErrorSchema } from "../sharedSchemas";
@@ -45,9 +45,9 @@ export function buildOpenAPIDocument() {
   });
 
   // Schemas
-  registry.register("Club", ClubDTOSchema);
+  registry.register("ClubSummary", ClubSummarySchema);
   registry.register("PaginatedClubs", PaginatedClubsSchema);
-  registry.register("Event", EventDTOSchema);
+  registry.register("EventSummary", EventSummarySchema);
   registry.register("PaginatedEvents", PaginatedEventsSchema);
   registry.register("ErrorResponse", ErrorSchema);
 

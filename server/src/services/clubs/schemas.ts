@@ -1,11 +1,26 @@
+// src/services/clubs/schemas.ts
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { makePaginatedSchema, type Paginated } from "../../utils/sharedSchemas";
 
 extendZodWithOpenApi(z);
 
-// DTO
-export const ClubDTOSchema = z
+/** List item / card view */
+export const ClubSummarySchema = z
+  .object({
+    id: z.uuid(),
+    name: z.string(),
+    description: z.string().nullable(),
+    campuses: z.array(z.string()).nullable(),
+    areasOfInterest: z.array(z.string()),
+    connectedToEventNest: z.boolean(),
+  })
+  .openapi("ClubSummary");
+
+export type ClubSummaryDTO = z.infer<typeof ClubSummarySchema>;
+
+/** Detail view (safe to extend later with more fields) */
+export const ClubDetailSchema = z
   .object({
     id: z.uuid(),
     name: z.string(),
@@ -18,21 +33,26 @@ export const ClubDTOSchema = z
       instagram: z.url().nullable(),
       website: z.url().nullable(),
     }),
-    sopPage: z.url().nullable(), // groupUrl
-    contact: z.email().nullable(), // groupEmail
+    sopPage: z.url().nullable(),
+    contact: z.email().nullable(),
     connectedToEventNest: z.boolean(),
+
+    // --- add detail-only fields here later ---
+    // longDescription: z.string().nullable().optional(),
+    // links: z.array(z.object({ label: z.string(), url: z.string().url() })).optional(),
   })
-  .openapi("Club");
+  .openapi("ClubDetail");
 
-export type ClubDTO = z.infer<typeof ClubDTOSchema>;
+export type ClubDetailDTO = z.infer<typeof ClubDetailSchema>;
 
+/** Paginated list of summaries */
 export const PaginatedClubsSchema = makePaginatedSchema(
-  ClubDTOSchema,
+  ClubSummarySchema,
   "PaginatedClubs"
 );
+export type PaginatedClubs = Paginated<ClubSummaryDTO>;
 
-export type PaginatedClubs = Paginated<ClubDTO>;
-
+/** Filters for service/repo */
 export type ClubsFilter = {
   campusFilter: string[];
   interestsFilter: string[];

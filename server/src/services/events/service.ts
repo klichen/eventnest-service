@@ -1,24 +1,16 @@
 import type { EventEntity } from "../../repos/events/entities";
 import { EventsRepo } from "../../repos/events/repo";
+import { HttpError } from "../../utils/errors";
 import { calcOffset } from "../../utils/helpers";
-import type { EventDTO, EventsFilters, PaginatedEvents } from "./schemas";
+import type {
+  EventDetailDTO,
+  EventSummaryDTO,
+  EventsFilters,
+  PaginatedEvents,
+} from "./schemas";
 
 export class EventsService {
   constructor(private repo = new EventsRepo()) {}
-
-  private toDTO(e: EventEntity): EventDTO {
-    return {
-      id: e.id,
-      clubId: e.clubId,
-      imageUrl: e.imageUrl,
-      title: e.title,
-      location: e.location,
-      startDatetime: e.startDatetime,
-      endDatetime: e.endDatetime,
-      incentives: e.incentives,
-      campuses: e.campuses,
-    };
-  }
 
   async listEvents(args: {
     page: number;
@@ -40,7 +32,7 @@ export class EventsService {
 
     const totalPages = Math.max(1, Math.ceil(totalEvents / limit));
     const hasNext = args.page < totalPages;
-    const clubDTO = clubEntities.map((e) => this.toDTO(e));
+    const clubDTO = clubEntities.map((e) => this.toSummaryDTO(e));
     return {
       pagination: {
         page: args.page,
@@ -54,6 +46,39 @@ export class EventsService {
   }
 
   async getEvent(id: string) {
-    return this.repo.findByPostId(id);
+    const eventEntityOrError = await this.repo.findById(id);
+    if (!eventEntityOrError) return new HttpError("Event not found", 404);
+    if (eventEntityOrError instanceof Error) return eventEntityOrError;
+    return this.toDetailDTO(eventEntityOrError);
+  }
+
+  private toSummaryDTO(e: EventEntity): EventSummaryDTO {
+    return {
+      id: e.id,
+      clubId: e.clubId,
+      imageUrl: e.imageUrl,
+      title: e.title,
+      location: e.location,
+      startDatetime: e.startDatetime,
+      endDatetime: e.endDatetime,
+      incentives: e.incentives,
+      campuses: e.campuses,
+    };
+  }
+
+  private toDetailDTO(e: EventEntity): EventDetailDTO {
+    return {
+      id: e.id,
+      clubId: e.clubId,
+      imageUrl: e.imageUrl,
+      postUrl: e.postUrl,
+      title: e.title,
+      description: e.description,
+      location: e.location,
+      startDatetime: e.startDatetime,
+      endDatetime: e.endDatetime,
+      incentives: e.incentives,
+      campuses: e.campuses,
+    };
   }
 }

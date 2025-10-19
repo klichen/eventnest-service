@@ -12,6 +12,7 @@ import {
 } from "../utils/helpers";
 import { ALLOWED_CAMPUS_KEYS, ALLOWED_INTEREST_KEYS } from "../utils/constants";
 import { EventsService } from "../services/events/service";
+import { idParam } from "../utils/types";
 
 const eventsQuery = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -80,13 +81,13 @@ export async function getAllEvents(req: Request, res: Response) {
     });
     res.json(result);
   } catch (err: unknown) {
-    console.error("Error fetching clubs", err);
+    console.error("Error fetching events", err);
     if (err instanceof HttpError) {
       res
         .status(err.statusCode ?? 400)
         .json({ error: err.message ?? "Invalid Request" });
     } else if (err instanceof Error) {
-      res.status(500).json({ error: err.message ?? "Failed to fetch clubs" });
+      res.status(500).json({ error: err.message ?? "Failed to fetch events" });
     }
   }
 }
@@ -124,13 +125,13 @@ export async function getTodayEvents(req: Request, res: Response) {
     });
     res.json(result);
   } catch (err: unknown) {
-    console.error("Error fetching clubs", err);
+    console.error("Error fetching events", err);
     if (err instanceof HttpError) {
       res
         .status(err.statusCode ?? 400)
         .json({ error: err.message ?? "Invalid Request" });
     } else if (err instanceof Error) {
-      res.status(500).json({ error: err.message ?? "Failed to fetch clubs" });
+      res.status(500).json({ error: err.message ?? "Failed to fetch events" });
     }
   }
 }
@@ -168,13 +169,13 @@ export async function getWeekEvents(req: Request, res: Response) {
     });
     res.json(result);
   } catch (err: unknown) {
-    console.error("Error fetching clubs", err);
+    console.error("Error fetching events", err);
     if (err instanceof HttpError) {
       res
         .status(err.statusCode ?? 400)
         .json({ error: err.message ?? "Invalid Request" });
     } else if (err instanceof Error) {
-      res.status(500).json({ error: err.message ?? "Failed to fetch clubs" });
+      res.status(500).json({ error: err.message ?? "Failed to fetch events" });
     }
   }
 }
@@ -211,4 +212,30 @@ function _validateFilters(
   }
 
   return { campusKeys, interestKeys };
+}
+
+export async function getSingleEvent(req: Request, res: Response) {
+  try {
+    const { id } = idParam.parse(req.params);
+
+    const eventsService = new EventsService();
+    const eventOrError = await eventsService.getEvent(id);
+
+    if (eventOrError instanceof Error || eventOrError instanceof HttpError) {
+      throw eventOrError;
+    }
+
+    res.json(eventOrError);
+  } catch (err: unknown) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: "Invalid event id (must be UUID)" });
+    } else if (err instanceof HttpError) {
+      res
+        .status(err.statusCode)
+        .json({ statusCode: err.statusCode, error: err.message });
+    } else if (err instanceof Error) {
+      console.error("Error fetching single event", err);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  }
 }

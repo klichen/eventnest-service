@@ -3,10 +3,12 @@ import {
   OpenApiGeneratorV31,
 } from "@asteasolutions/zod-to-openapi";
 import {
+  ClubDetailSchema,
   ClubSummarySchema,
   PaginatedClubsSchema,
 } from "../../services/clubs/schemas";
 import {
+  EventDetailSchema,
   EventSummarySchema,
   PaginatedEventsSchema,
 } from "../../services/events/schemas";
@@ -47,8 +49,10 @@ export function buildOpenAPIDocument() {
   // Schemas
   registry.register("ClubSummary", ClubSummarySchema);
   registry.register("PaginatedClubs", PaginatedClubsSchema);
+  registry.register("ClubDetails", ClubDetailSchema);
   registry.register("EventSummary", EventSummarySchema);
   registry.register("PaginatedEvents", PaginatedEventsSchema);
+  registry.register("EventDetails", EventDetailSchema);
   registry.register("ErrorResponse", ErrorSchema);
 
   /* ----------------------------- Clubs path ----------------------------- */
@@ -134,14 +138,6 @@ export function buildOpenAPIDocument() {
                       description: "Weekly board game nights.",
                       campuses: ["St George", "UTSC"],
                       areasOfInterest: ["Hobby & Leisure", "Social"],
-                      socials: {
-                        facebook: null,
-                        twitter: null,
-                        instagram: "https://instagram.com/uoftboardgames",
-                        website: null,
-                      },
-                      sopPage: "https://clubs.uoft.ca/boardgames",
-                      contact: "club@uoft.ca",
                       connectedToEventNest: true,
                     },
                   ],
@@ -282,6 +278,73 @@ export function buildOpenAPIDocument() {
       },
       400: {
         description: "Bad Request",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+          },
+        },
+      },
+      401: { description: "Missing or invalid API key" },
+      500: { description: "Server error" },
+    },
+  });
+
+  /* ------------------------- Club detail: GET /api/clubs/{id} ------------------------- */
+  registry.registerPath({
+    method: "get",
+    path: "/api/clubs/{id}",
+    tags: ["Clubs"],
+    summary: "Get a single club by id",
+    description: "Returns detailed information for a specific club.",
+    security: [{ ApiKeyAuth: [] }],
+    parameters: [
+      {
+        in: "path",
+        name: "id",
+        required: true,
+        description: "Club id (UUID)",
+        schema: { type: "string", format: "uuid" },
+      },
+    ],
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ClubDetails" },
+            examples: {
+              sample: {
+                value: {
+                  id: "2a1a5e4b-7f0d-4a21-b72d-7a5b5b3b5b20",
+                  name: "UofT Board Games",
+                  description: "Weekly board game nights.",
+                  campuses: ["St George", "UTSC"],
+                  areasOfInterest: ["Hobby & Leisure", "Social"],
+                  socials: {
+                    facebook: null,
+                    twitter: null,
+                    instagram: "https://instagram.com/uoftboardgames",
+                    website: null,
+                  },
+                  sopPage: "https://clubs.uoft.ca/boardgames",
+                  contact: "club@uoft.ca",
+                  connectedToEventNest: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      400: {
+        description: "Bad Request (invalid id)",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+          },
+        },
+      },
+      404: {
+        description: "Not Found",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -503,17 +566,79 @@ export function buildOpenAPIDocument() {
     },
   });
 
+  /* ------------------------- Event detail: GET /api/events/{id} ------------------------ */
+  registry.registerPath({
+    method: "get",
+    path: "/api/events/{id}",
+    tags: ["Events"],
+    summary: "Get a single event by id",
+    description: "Returns detailed information for a specific event.",
+    security: [{ ApiKeyAuth: [] }],
+    parameters: [
+      {
+        in: "path",
+        name: "id",
+        required: true,
+        description: "Event id (UUID)",
+        schema: { type: "string", format: "uuid" },
+      },
+    ],
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/EventDetails" },
+            examples: {
+              sample: {
+                value: {
+                  id: "9e9d3f5e-3e2a-4f24-8f0b-2a8f1f9ec0d1",
+                  clubId: "2a1a5e4b-7f0d-4a21-b72d-7a5b5b3b5b20",
+                  imageUrl: "https://cdn.example.com/events/welcome-week.jpg",
+                  title: "Welcome Week Fair",
+                  description:
+                    "Meet clubs, grab swag, and learn about student groups.",
+                  location: "Front Campus",
+                  startDatetime: "2025-09-01T15:00:00.000Z",
+                  endDatetime: "2025-09-01T19:00:00.000Z",
+                  incentives: "Free pizza",
+                  campuses: ["St George"],
+                  postUrl: "https://instagram.com/p/EXAMPLE123",
+                },
+              },
+            },
+          },
+        },
+      },
+      400: {
+        description: "Bad Request (invalid id)",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+          },
+        },
+      },
+      404: {
+        description: "Not Found",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+          },
+        },
+      },
+      401: { description: "Missing or invalid API key" },
+      500: { description: "Server error" },
+    },
+  });
+
   /* --------------------------- Final document --------------------------- */
   const generator = new OpenApiGeneratorV31(registry.definitions);
   return generator.generateDocument({
-    // If swagger-ui gets fussy with 3.1.0, use "3.0.3"
     openapi: "3.1.0",
     info: { title: "EventNest API", version: "1.0.0" },
     servers: [
       { url: process.env.HOST_URL ?? "/", description: "Default" },
       { url: "http://localhost:8080", description: "Local" },
     ],
-    // Optionally require API key globally:
-    // security: [{ ApiKeyAuth: [] }],
   });
 }

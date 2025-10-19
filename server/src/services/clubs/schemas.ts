@@ -5,7 +5,7 @@ import { makePaginatedSchema, type Paginated } from "../../utils/sharedSchemas";
 
 extendZodWithOpenApi(z);
 
-/** List item / card view */
+/** List view */
 export const ClubSummarySchema = z
   .object({
     id: z.uuid(),
@@ -19,7 +19,7 @@ export const ClubSummarySchema = z
 
 export type ClubSummaryDTO = z.infer<typeof ClubSummarySchema>;
 
-/** Detail view (safe to extend later with more fields) */
+/** Detail view (for GET /api/clubs/:id) */
 export const ClubDetailSchema = z
   .object({
     id: z.uuid(),
@@ -36,23 +36,17 @@ export const ClubDetailSchema = z
     sopPage: z.url().nullable(),
     contact: z.email().nullable(),
     connectedToEventNest: z.boolean(),
-
-    // --- add detail-only fields here later ---
-    // longDescription: z.string().nullable().optional(),
-    // links: z.array(z.object({ label: z.string(), url: z.string().url() })).optional(),
   })
-  .openapi("ClubDetail");
+  .openapi("ClubDetails");
 
 export type ClubDetailDTO = z.infer<typeof ClubDetailSchema>;
 
-/** Paginated list of summaries */
 export const PaginatedClubsSchema = makePaginatedSchema(
   ClubSummarySchema,
   "PaginatedClubs"
 );
 export type PaginatedClubs = Paginated<ClubSummaryDTO>;
 
-/** Filters for service/repo */
 export type ClubsFilter = {
   campusFilter: string[];
   interestsFilter: string[];

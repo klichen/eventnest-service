@@ -43,7 +43,7 @@ export const EventDetailSchema = z
     campuses: z.array(z.string()).nullable(),
     postUrl: z.string(),
   })
-  .openapi("Event");
+  .openapi("EventDetails");
 
 export type EventDetailDTO = z.infer<typeof EventDetailSchema>;
 
